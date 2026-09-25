@@ -1,17 +1,17 @@
 <?xml version='1.0' encoding='utf-8'?>
 <plugins>
-  <pyqgis_plugin name="Geodata Downloader (Lantmäteriet)" version="0.1.2" plugin_id="lm_stac_downloader">
+  <pyqgis_plugin name="Geodata Downloader (Lantmäteriet)" version="0.1.3" plugin_id="lm_stac_downloader">
     <description>Sök och hämta ortofoto och höjddata från Lantmäteriets STAC-tjänster, direkt från kartan</description>
     <about>Söker i Lantmäteriets STAC-tjänster för ortofoto och höjddata med kartstöd, och hämtar valda rasterfiler. Autentisering sker via QGIS inbyggda autentiseringshanterare (OAuth2). Fristående plugin som inte är utvecklat av Lantmäteriet.</about>
-    <version>0.1.2</version>
+    <version>0.1.3</version>
     <qgis_minimum_version>3.44</qgis_minimum_version>
     <qgis_maximum_version>3.99</qgis_maximum_version>
     <supports_qt6>False</supports_qt6>
     <homepage>https://github.com/matself/LM-STAC-Downloader</homepage>
-    <file_name>lm_stac_downloader.0.1.2.zip</file_name>
+    <file_name>lm_stac_downloader.0.1.3.zip</file_name>
     <icon>https://raw.githubusercontent.com/matself/LM-STAC-Downloader/main/lm_stac_downloader/icon.png</icon>
     <author_name>Mats Elfström</author_name>
-    <download_url>https://github.com/matself/LM-STAC-Downloader/releases/download/v0.1.2/lm_stac_downloader.0.1.2.zip</download_url>
+    <download_url>https://github.com/matself/LM-STAC-Downloader/releases/download/v0.1.3/lm_stac_downloader.0.1.3.zip</download_url>
     <uploaded_by>Mats Elfström</uploaded_by>
     <experimental>True</experimental>
     <deprecated>False</deprecated>
