@@ -20,10 +20,25 @@ class StacItem:
     proj_bbox: tuple[float, ...] = ()
     cog: bool = False
     spectral: str | None = None  # e.g. "rgb" or "cir" for orthophotos
+    model: str | None = None  # e.g. "markhöjdmodell" for elevation models
+    changed: str | None = None  # date the data was last changed (elevation models)
 
     @property
     def filename(self) -> str:
         return self.href.rstrip("/").rsplit("/", 1)[-1]
+
+    @property
+    def tile_label(self) -> str:
+        """Tile size from the extent, e.g. "2,5 km-ruta" or "10 km-blad". Empty if unknown."""
+        if len(self.proj_bbox) != 4:
+            return ""
+        km = (self.proj_bbox[2] - self.proj_bbox[0]) / 1000
+        return f"{km:g}".replace(".", ",") + (" km-blad" if km >= 10 else " km-ruta")
+
+    @property
+    def kind(self) -> str:
+        """What sets this item apart from its siblings: spectral type or tile size."""
+        return self.spectral or (self.tile_label if self.model else "")
 
 
 def parse_item(feature: dict[str, Any]) -> StacItem | None:
@@ -53,6 +68,8 @@ def parse_item(feature: dict[str, Any]) -> StacItem | None:
         proj_bbox=tuple(data.get("proj:bbox") or props.get("proj:bbox") or ()),
         cog="cloud-optimized" in (data.get("type") or "").lower(),
         spectral=props.get("spektraltyp"),
+        model=props.get("hojdmodelltyp"),
+        changed=props.get("andringsdatum"),
     )
 
 

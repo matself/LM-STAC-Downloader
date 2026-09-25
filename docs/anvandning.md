@@ -57,7 +57,7 @@ Sökningen tar som mest 1000 träffar. Blir det fler visas ett meddelande. Snäv
 
 ## 3. Välj rutor
 
-Träffarna listas med rutans namn, kollektion (för ortofoto områdets namn och år), bildtyp (till exempel `rgb` för färg och `cir` för färginfraröd), år, upplösning och filstorlek. Klicka på
+Träffarna listas med rutans namn, kollektion (för ortofoto områdets namn och år), typ, år, upplösning, när datat senast ändrats (höjd) och filstorlek. Typen är bildtyp för ortofoto (`rgb` för färg, `cir` för färginfraröd) och rutstorlek för höjd. Klicka på
 kolumnrubrikerna för att sortera.
 
 Markera rutor genom att:
@@ -112,12 +112,17 @@ Ett exempel: fyra ortofotorutor (2,6 GB) som möts i ett hörn gav ett utsnitt p
 
 ### Höjdkollektioner
 
-Höjdsökningen kan ge träffar i två sorters kollektioner:
+Höjdsökningen kan ge träffar i två sorters kollektioner. I kolumnen *Typ* syns rutstorleken:
 
-* **`mhm-*`**: rutor om 2,5 × 2,5 km, cirka 8 MB.
-* **`dtm-cog`**: blad om 10 × 10 km, cirka 290 MB, Lantmäteriets nyare höjdformat.
+* **`dtm-cog`, 10 km-blad**: blad om 10 × 10 km, cirka 290 MB. Det är Lantmäteriets nya format, med brytgeometrier i GeoPackage
+  för ytor där vatten har plattats till, och en infofil med metadata.
+* **`mhm-*`, 2,5 km-ruta**: de äldre rutorna om 2,5 × 2,5 km, cirka 8–10 MB. Enligt Lantmäteriet slutade de uppdateras
+  15 juni och avvecklas på sikt. Något slutdatum anges inte.
 
-De täcker samma platser, så du kan få båda för samma område. Välj den du vill ha. Med utsnitt spelar filstorleken mindre roll.
+Båda är markhöjdmodeller med 1 m upplösning i Cloud Optimized GeoTIFF, och de täcker samma platser, så du kan få båda för
+samma område. Kolumnen *Ändrad* visar när datat senast ändrats, så du ser vilken som är nyast. Välj den du vill ha. Med
+utsnitt spelar filstorleken mindre roll. Se
+[Lantmäteriets nyhet](https://www.lantmateriet.se/sv/geodata/vara-produkter/Produktnyheter/Geografisk-information/markhojdmodell-nedladdning-utokas-med-mer-innehall/).
 
 ## Felsökning
 
