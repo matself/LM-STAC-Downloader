@@ -85,7 +85,18 @@ class DownloadQueue(QObject):
         self.paths.append(str(final))
 
     def _error(self, item: StacItem, errors: list) -> None:
-        self.failures.append(f"{item.filename}: {'; '.join(str(e) for e in errors)}")
+        message = "; ".join(str(e) for e in errors)
+        if "Forbidden" in message:
+            # Searching works for any valid application, but the download host also
+            # checks the entitlement, which is ordered on Geotorget per system account.
+            message = (
+                "åtkomst nekad. Sökningen fungerade, men den valda autentiseringen "
+                "får inte hämta filer. Kontrollera att nycklarna hör till ett "
+                "systemkonto som har beställt Ortofoto Nedladdning eller "
+                "Markhöjdmodell Nedladdning (produktion) på Geotorget, och att "
+                "applikationen prenumererar på STAC-bild respektive STAC-hojd."
+            )
+        self.failures.append(f"{item.filename}: {message}")
 
     @staticmethod
     def _discard(part: Path) -> None:

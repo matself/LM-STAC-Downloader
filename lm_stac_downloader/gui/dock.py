@@ -10,13 +10,21 @@ from qgis.core import (
     QgsCoordinateReferenceSystem,
     QgsCoordinateTransform,
     QgsGeometry,
+    QgsPointXY,
     QgsProject,
     QgsRasterLayer,
     QgsRectangle,
     QgsSettings,
 )
-from qgis.gui import QgsAuthConfigSelect, QgsFileWidget, QgsMapToolExtent, QgsRubberBand
+from qgis.gui import (
+    QgsAuthConfigSelect,
+    QgsFileWidget,
+    QgsMapToolEmitPoint,
+    QgsMapToolExtent,
+    QgsRubberBand,
+)
 from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtGui import QCursor
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import (
     QCheckBox,
@@ -26,6 +34,7 @@ from qgis.PyQt.QtWidgets import (
     QGroupBox,
     QHBoxLayout,
     QLabel,
+    QMenu,
     QMessageBox,
     QProgressBar,
     QPushButton,
@@ -93,6 +102,10 @@ class StacDock(QDockWidget):
         self._tool = QgsMapToolExtent(self.canvas)
         self._tool.extentChanged.connect(self._on_extent_drawn)
         self._tool.deactivated.connect(self._on_tool_deactivated)
+        self._pick_tool = QgsMapToolEmitPoint(self.canvas)
+        self._pick_tool.canvasClicked.connect(self._on_map_clicked)
+        self._pick_tool.deactivated.connect(lambda: self.pick_btn.setChecked(False))
+        self._rows: dict[tuple[str, str], QTreeWidgetItem] = {}
         self._band = QgsRubberBand(self.canvas, _polygon_type())
         self._band.setColor(QColor(200, 40, 40, 200))
         self._band.setFillColor(QColor(200, 40, 40, 40))
@@ -129,8 +142,9 @@ class StacDock(QDockWidget):
             self._search_task.cancel()
         for band in (self._band, self._hits_band, self._selected_band):
             band.reset(_polygon_type())
-        if self.canvas.mapTool() is self._tool:
-            self.canvas.unsetMapTool(self._tool)
+        for tool in (self._tool, self._pick_tool):
+            if self.canvas.mapTool() is tool:
+                self.canvas.unsetMapTool(tool)
         self._save_settings()
 
     # --- UI construction -------------------------------------------------
@@ -203,6 +217,12 @@ class StacDock(QDockWidget):
         self.tree.setHeaderLabels(["Ruta", "Kollektion", "År", "Upplösning", "Storlek"])
         self.tree.itemChanged.connect(self._update_summary)
         layout.addWidget(self.tree)
+
+        self.pick_btn = QPushButton("Välj rutor i kartan")
+        self.pick_btn.setCheckable(True)
+        self.pick_btn.setToolTip("Klicka på en ruta i kartan för att markera eller avmarkera den")
+        self.pick_btn.toggled.connect(self._toggle_pick_tool)
+        layout.addWidget(self.pick_btn)
 
         row = QHBoxLayout()
         all_btn = QPushButton("Markera alla")
@@ -386,6 +406,7 @@ class StacDock(QDockWidget):
         self.tree.blockSignals(True)
         self.tree.setSortingEnabled(False)
         self.tree.clear()
+        self._rows = {}
         for item in self.items:
             row = _SortableItem(
                 [
@@ -403,6 +424,7 @@ class StacDock(QDockWidget):
             row.setData(COL_RES, Qt.ItemDataRole.UserRole, item.resolution or 0)
             row.setData(COL_SIZE, Qt.ItemDataRole.UserRole, item.size or 0)
             self.tree.addTopLevelItem(row)
+            self._rows[(item.collection, item.id)] = row
         self.tree.setSortingEnabled(True)
         self.tree.blockSignals(False)
         for column in range(5):
@@ -463,6 +485,50 @@ class StacDock(QDockWidget):
                 QgsGeometry.collectGeometry(geometries),
                 QgsCoordinateReferenceSystem(SEARCH_CRS),
             )
+
+    # --- picking in the map ----------------------------------------------
+
+    def _toggle_pick_tool(self, on: bool) -> None:
+        if on:
+            self.canvas.setMapTool(self._pick_tool)
+        elif self.canvas.mapTool() is self._pick_tool:
+            self.canvas.unsetMapTool(self._pick_tool)
+
+    def _on_map_clicked(self, point: QgsPointXY, _button) -> None:
+        if not self._geometries:
+            self._message("Sök först, så visas rutorna i kartan.", Qgis.MessageLevel.Warning)
+            return
+        transform = QgsCoordinateTransform(
+            self.canvas.mapSettings().destinationCrs(),
+            QgsCoordinateReferenceSystem(SEARCH_CRS),
+            QgsProject.instance(),
+        )
+        click = QgsGeometry.fromPointXY(transform.transform(point))
+        hits = [
+            key
+            for key, geometry in self._geometries.items()
+            if key in self._rows and geometry.contains(click)
+        ]
+        if not hits:
+            return
+        if len(hits) == 1:
+            self._toggle_row(hits[0])
+            return
+        # Several tiles overlap here (e.g. different years): let the user choose.
+        menu = QMenu(self)
+        for key in hits:
+            row = self._rows[key]
+            action = menu.addAction(f"{row.text(COL_COLLECTION)} · {row.text(COL_YEAR)} · {row.text(COL_NAME)}")
+            action.setCheckable(True)
+            action.setChecked(row.checkState(COL_NAME) == Qt.CheckState.Checked)
+            action.triggered.connect(lambda _checked, key=key: self._toggle_row(key))
+        menu.exec(QCursor.pos())
+
+    def _toggle_row(self, key: tuple[str, str]) -> None:
+        row = self._rows[key]
+        checked = row.checkState(COL_NAME) == Qt.CheckState.Checked
+        row.setCheckState(COL_NAME, Qt.CheckState.Unchecked if checked else Qt.CheckState.Checked)
+        self.tree.scrollToItem(row)
 
     # --- download --------------------------------------------------------
 
