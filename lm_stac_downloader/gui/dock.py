@@ -206,6 +206,11 @@ class StacDock(QDockWidget):
         self.search_status = QLabel("")
         self.search_status.setWordWrap(True)
         layout.addWidget(self.search_status)
+
+        clear_btn = QPushButton("Rensa sökområde och träffar")
+        clear_btn.setToolTip("Tar bort sökrutan och de blå och orange rutorna från kartan")
+        clear_btn.clicked.connect(self._clear)
+        layout.addWidget(clear_btn)
         return group
 
     def _build_results_group(self) -> QGroupBox:
@@ -357,6 +362,21 @@ class StacDock(QDockWidget):
             self.canvas.setMapTool(self._previous_tool)
         else:
             self.canvas.unsetMapTool(self._tool)
+
+    def _clear(self) -> None:
+        """Remove the search area, the hits and their outlines from map and list."""
+        for band in (self._band, self._hits_band, self._selected_band):
+            band.reset(_polygon_type())
+        self.area = None
+        self.area_label.setText("Inget område valt")
+        self.items = []
+        self._geometries = {}
+        self._rows = {}
+        self.tree.clear()
+        self.search_status.setText("")
+        self._update_summary()
+        self.pick_btn.setChecked(False)
+        self.canvas.refresh()
 
     # --- search ----------------------------------------------------------
 
@@ -601,9 +621,18 @@ class StacDock(QDockWidget):
             self._message("Välj ett område först för att hämta utsnitt.", Qgis.MessageLevel.Warning)
             return None
         jobs, missed = [], []
+        not_cog = [i for i in items if not i.cog]
         for item in items:
+            if not item.cog:
+                continue  # partial reads only pay off for Cloud Optimized GeoTIFF
             bounds = clip_bounds(item, self.area)
             (jobs if bounds else missed).append((item, bounds) if bounds else item)
+        if not_cog:
+            self._message(
+                f"{len(not_cog)} valda rutor är inte Cloud Optimized GeoTIFF och kan inte klippas. "
+                "Avmarkera utsnitt för att hämta dem som hela filer.",
+                Qgis.MessageLevel.Warning,
+            )
         if missed:
             self._message(
                 f"{len(missed)} valda rutor ligger utanför området och hoppas över.",

@@ -31,8 +31,13 @@ redan hämtade filer av rätt storlek hoppas över.
 
 Rutorna är stora (en ortofotoruta är cirka 640 MB, ett höjdblad i `dtm-cog` cirka 290 MB). Filerna är Cloud Optimized
 GeoTIFF, så med **"Hämta bara det valda området (utsnitt)"** hämtas bara de delar som täcker området du sökte på.
-Utsnittet sparas som `<fil>_utsnitt_<koordinater>.tif` med samma koordinatsystem som originalet, och en utsnittsfil är
-oftast några MB. Pluginet ger GDAL inloggningen från QGIS autentiseringshanterare, så ingen extra inloggning behövs.
+Rutorna som området berör slås ihop till **en fil per kollektion** (alltså per år för ortofoto). Filen heter
+`<kollektion>_utsnitt_<minx>_<miny>_<maxx>_<maxy>.tif`, har samma koordinatsystem som originalet och blir oftast några MB
+för ett litet område. Storleken följer området: en yta större än en ruta ger stora filer, även om det bara är delar av
+rutorna. Pluginet ger GDAL inloggningen från QGIS autentiseringshanterare, så ingen extra inloggning behövs, och förnyar den
+under långa klippningar.
+
+Knappen **Rensa sökområde och träffar** tar bort den röda sökrutan och de blå och orange rutorna från kartan.
 
 ## Behörigheter
 
