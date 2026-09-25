@@ -57,6 +57,7 @@ from ..config import (
     search_base_url,
 )
 from ..core.auth import authcfg_exists
+from ..core.clip import ClipTask, clip_bounds, covered_fraction
 from ..core.downloader import DownloadQueue
 from ..core.items import StacItem
 from ..core.task import SearchTask
@@ -96,6 +97,7 @@ class StacDock(QDockWidget):
         self.area: QgsRectangle | None = None  # WGS 84
         self._search_task: SearchTask | None = None
         self._queue: DownloadQueue | None = None
+        self._clip_task: ClipTask | None = None
         self._geometries: dict[tuple[str, str], QgsGeometry] = {}
         self._previous_tool = None
 
@@ -245,6 +247,13 @@ class StacDock(QDockWidget):
         self.output_widget.setStorageMode(QgsFileWidget.StorageMode.GetDirectory)
         layout.addWidget(self.output_widget)
 
+        self.clip_check = QCheckBox("Hämta bara det valda området (utsnitt)")
+        self.clip_check.setToolTip(
+            "Hämtar bara de delar av filerna som täcker området du valt, i stället för hela filen. "
+            "Fungerar eftersom filerna är Cloud Optimized GeoTIFF."
+        )
+        layout.addWidget(self.clip_check)
+
         self.add_to_project = QCheckBox("Lägg till i projektet när klart")
         self.add_to_project.setChecked(True)
         layout.addWidget(self.add_to_project)
@@ -277,6 +286,7 @@ class StacDock(QDockWidget):
         self.service_combo.setCurrentIndex(max(0, self.service_combo.findData(service)))
         self.year_from.setValue(int(self.settings.value(self._key("year_from"), 2020)))
         self.year_to.setValue(int(self.settings.value(self._key("year_to"), 2026)))
+        self.clip_check.setChecked(str(self.settings.value(self._key("clip"), "false")).lower() == "true")
         self.output_widget.setFilePath(self.settings.value(self._key("output"), str(Path.home())))
 
     def _save_settings(self) -> None:
@@ -284,6 +294,7 @@ class StacDock(QDockWidget):
         self.settings.setValue(self._key("service"), self.service_combo.currentData())
         self.settings.setValue(self._key("year_from"), self.year_from.value())
         self.settings.setValue(self._key("year_to"), self.year_to.value())
+        self.settings.setValue(self._key("clip"), self.clip_check.isChecked())
         self.settings.setValue(self._key("output"), self.output_widget.filePath())
 
     # --- helpers ---------------------------------------------------------
@@ -547,31 +558,78 @@ class StacDock(QDockWidget):
             self._message("Välj en målmapp.", Qgis.MessageLevel.Warning)
             return
 
-        total = sum(i.size for i in items if i.size)
+        jobs = None
+        if self.clip_check.isChecked():
+            jobs = self._clip_jobs(items)
+            if jobs is None:
+                return
+            total = sum(int(item.size * covered_fraction(item, bounds)) for item, bounds in jobs if item.size)
+            count = len(jobs)
+        else:
+            total = sum(i.size for i in items if i.size)
+            count = len(items)
+
         if total > WARN_BYTES:
             answer = QMessageBox.question(
                 self,
                 PLUGIN_NAME,
-                f"Du är på väg att hämta {len(items)} filer, ungefär {_format_bytes(total)}. Fortsätta?",
+                f"Du är på väg att hämta {count} filer, ungefär {_format_bytes(total)}. Fortsätta?",
             )
             if answer != QMessageBox.StandardButton.Yes:
                 return
         self._save_settings()
 
+        if jobs is not None:
+            task = ClipTask(jobs, authcfg, Path(output))
+            task.progress_info.connect(self._on_clip_progress)
+            task.completed.connect(self._on_download_finished)
+            self._clip_task = task
+            self._begin_download_ui()
+            QgsApplication.taskManager().addTask(task)
+            return
+
         queue = DownloadQueue(items, authcfg, Path(output), self)
         queue.progress.connect(self._on_download_progress)
         queue.finished.connect(self._on_download_finished)
         self._queue = queue
+        self._begin_download_ui()
+        queue.start()
+
+    def _clip_jobs(self, items: list[StacItem]) -> list | None:
+        """(item, bounds) for the items the chosen area touches; None if nothing to do."""
+        if self.area is None:
+            self._message("Välj ett område först för att hämta utsnitt.", Qgis.MessageLevel.Warning)
+            return None
+        jobs, missed = [], []
+        for item in items:
+            bounds = clip_bounds(item, self.area)
+            (jobs if bounds else missed).append((item, bounds) if bounds else item)
+        if missed:
+            self._message(
+                f"{len(missed)} valda rutor ligger utanför området och hoppas över.",
+                Qgis.MessageLevel.Warning,
+            )
+        if not jobs:
+            return None
+        return jobs
+
+    def _begin_download_ui(self) -> None:
         self.download_btn.setVisible(False)
         self.cancel_btn.setVisible(True)
         self.progress.setVisible(True)
         self.progress.setRange(0, 0)
-        queue.start()
+
+    def _on_clip_progress(self, index: int, count: int, name: str, percent: int) -> None:
+        self.progress.setRange(0, 100)
+        self.progress.setValue(percent)
+        self.progress_label.setText(f"Utsnitt {index} av {count}: {name} ({percent} %)")
 
     def _cancel(self) -> None:
+        self.progress_label.setText("Avbryter…")
         if self._queue:
-            self.progress_label.setText("Avbryter…")
             self._queue.cancel()
+        if self._clip_task:
+            self._clip_task.cancel()
 
     def _on_download_progress(self, index: int, count: int, name: str, received: int, total: int) -> None:
         if total > 0:
@@ -587,6 +645,7 @@ class StacDock(QDockWidget):
         queue, self._queue = self._queue, None
         if queue:
             queue.deleteLater()
+        self._clip_task = None
         self.download_btn.setVisible(True)
         self.cancel_btn.setVisible(False)
         self.progress.setVisible(False)

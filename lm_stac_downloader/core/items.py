@@ -17,6 +17,7 @@ class StacItem:
     bbox: tuple[float, ...]
     geometry: dict[str, Any] | None
     crs: str | None
+    proj_bbox: tuple[float, ...] = ()
 
     @property
     def filename(self) -> str:
@@ -47,6 +48,7 @@ def parse_item(feature: dict[str, Any]) -> StacItem | None:
         bbox=tuple(feature.get("bbox") or ()),
         geometry=feature.get("geometry"),
         crs=data.get("proj:code") or props.get("proj:code"),
+        proj_bbox=tuple(data.get("proj:bbox") or props.get("proj:bbox") or ()),
     )
 
 
