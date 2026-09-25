@@ -1,6 +1,6 @@
 [general]
 name=LM-STAC Downloader
-qgisMinimumVersion=3.34
+qgisMinimumVersion=3.44
 qgisMaximumVersion=4.99
 supportsQt6=True
 description=Sök och hämta ortofoto och höjddata från Lantmäteriets STAC-tjänster, direkt från kartan
