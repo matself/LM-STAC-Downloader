@@ -1,3 +1,5 @@
+<img src="lm_stac_downloader/icon.svg" alt="" width="72" align="right">
+
 # LM-STAC Downloader
 
 QGIS-plugin för att söka och hämta **rasterdata** från Lantmäteriets STAC-tjänster, med sökning direkt i kartan.
