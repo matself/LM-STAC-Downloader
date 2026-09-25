@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-PLUGIN_NAME = "LM-STAC Downloader"
+PLUGIN_NAME = "Geodata Downloader (Lantmäteriet)"
 SETTINGS_PREFIX = "lm_stac_downloader"
 
 API_URL = "https://api.lantmateriet.se"

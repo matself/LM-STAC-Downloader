@@ -88,7 +88,7 @@ class ClipTask(QgsTask):
     progress_info = pyqtSignal(int, int, str, int)
 
     def __init__(self, jobs: list[tuple[StacItem, Bounds]], authcfg: str, output_dir: Path):
-        super().__init__(f"LM-STAC: hämtar {len(jobs)} utsnitt", QgsTask.Flag.CanCancel)
+        super().__init__(f"Geodata: hämtar {len(jobs)} utsnitt", QgsTask.Flag.CanCancel)
         self.jobs = jobs
         self.authcfg = authcfg
         self.output_dir = output_dir

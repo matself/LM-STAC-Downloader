@@ -127,6 +127,10 @@ class StacDock(QDockWidget):
         layout.addWidget(self._build_search_group())
         layout.addWidget(self._build_results_group())
         layout.addWidget(self._build_output_group())
+        note = QLabel("Fristående plugin, inte utvecklat av Lantmäteriet.")
+        note.setWordWrap(True)
+        note.setEnabled(False)
+        layout.addWidget(note)
         layout.addStretch()
 
         scroll = QScrollArea()

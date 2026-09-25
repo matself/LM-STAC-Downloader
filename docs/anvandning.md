@@ -1,6 +1,8 @@
 # Användning
 
-LM-STAC Downloader hämtar ortofoto och höjddata från Lantmäteriet. Den här sidan går igenom hela flödet, hur utsnitt
+> **Fristående plugin.** Det här pluginet är inte utvecklat, granskat eller supportat av Lantmäteriet. Namnet Lantmäteriet används bara för att säga vilka tjänster pluginet fungerar mot. Frågor om pluginet ställer du i [det här repots ärenden](https://github.com/matself/LM-STAC-Downloader/issues), inte till Lantmäteriets support. Data hämtas från Lantmäteriets tjänster och omfattas av deras användningsvillkor.
+
+Geodata Downloader (Lantmäteriet) hämtar ortofoto och höjddata från Lantmäteriet. Den här sidan går igenom hela flödet, hur utsnitt
 fungerar och vad man gör när något inte fungerar.
 
 ## Innan du börjar
@@ -29,7 +31,7 @@ Använd nycklar från ett systemkonto av typen *Geodataprodukter* som har bestä
 
 ## 1. Skapa en inloggning
 
-1. Öppna panelen: webbmenyn (*Webb → LM-STAC Downloader*) eller ikonen i verktygsfältet.
+1. Öppna panelen: webbmenyn (*Webb → Geodata Downloader (Lantmäteriet)*) eller ikonen i verktygsfältet.
 2. Under **Anslutning** finns väljaren *Autentisering*. Här kan du välja en befintlig OAuth 2-konfiguration, eller klicka på
    **Ny Lantmäteriet-inloggning…**.
 3. Ange Consumer Key och Consumer Secret. Pluginet skapar en OAuth 2-konfiguration (Client Credentials) i QGIS
@@ -136,4 +138,4 @@ Geotorget, och att applikationen prenumererar på STAC-bild respektive STAC-hojd
 **Utsnittet hoppar över rutor.** Antingen ligger rutan utanför området, eller så är filen inte Cloud Optimized GeoTIFF. Då
 kan du avmarkera utsnitt och hämta den som en hel fil.
 
-Loggmeddelanden hittar du i QGIS *Loggmeddelanden*-panel, under fliken *LM-STAC Downloader*.
+Loggmeddelanden hittar du i QGIS *Loggmeddelanden*-panel, under fliken *Geodata Downloader (Lantmäteriet)*.

@@ -1,8 +1,10 @@
 <img src="lm_stac_downloader/icon.svg" alt="" width="72" align="right">
 
-# LM-STAC Downloader
+# Geodata Downloader (Lantmäteriet)
 
 QGIS-plugin för att söka och hämta **rasterdata** från Lantmäteriets STAC-tjänster, med sökning direkt i kartan.
+
+> **Fristående plugin.** Det här pluginet är inte utvecklat, granskat eller supportat av Lantmäteriet. Namnet Lantmäteriet används bara för att säga vilka tjänster pluginet fungerar mot. Frågor om pluginet ställer du i [det här repots ärenden](https://github.com/matself/LM-STAC-Downloader/issues), inte till Lantmäteriets support. Data hämtas från Lantmäteriets tjänster och omfattas av deras användningsvillkor.
 
 Rita en ruta i kartan, se vilka ortofoton eller höjdrutor som täcker den, markera de du vill ha och hämta dem. Rutorna
 är stora (en ortofotoruta är cirka 640 MB), så pluginet kan också hämta **bara det utsnitt du valt** och slå ihop det till
@@ -22,7 +24,7 @@ Pluginet finns inte i det officiella plugin-repot. Lägg i stället till det hä
 1. *Insticksprogram → Hantera och installera → Inställningar → Lägg till…*
 2. URL: `https://raw.githubusercontent.com/matself/LM-STAC-Downloader/main/plugins.xml`
 3. Kryssa i *Visa även experimentella insticksprogram* (pluginet är markerat experimentellt).
-4. Sök efter *LM-STAC Downloader* och installera. Nya versioner visas sedan som vanliga uppdateringar.
+4. Sök efter *Geodata Downloader (Lantmäteriet)* och installera. Nya versioner visas sedan som vanliga uppdateringar.
 
 Alternativt: hämta zip-filen under [Releases](https://github.com/matself/LM-STAC-Downloader/releases) och välj
 *Installera från ZIP*.

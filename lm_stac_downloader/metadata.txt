@@ -1,11 +1,11 @@
 [general]
-name=LM-STAC Downloader
+name=Geodata Downloader (Lantmäteriet)
 qgisMinimumVersion=3.44
 qgisMaximumVersion=3.99
 supportsQt6=False
 description=Sök och hämta ortofoto och höjddata från Lantmäteriets STAC-tjänster, direkt från kartan
-about=Söker i Lantmäteriets STAC-tjänster för ortofoto och höjddata med kartstöd, och hämtar valda rasterfiler. Autentisering sker via QGIS inbyggda autentiseringshanterare (OAuth2).
-version=0.1.0
+about=Söker i Lantmäteriets STAC-tjänster för ortofoto och höjddata med kartstöd, och hämtar valda rasterfiler. Autentisering sker via QGIS inbyggda autentiseringshanterare (OAuth2). Fristående plugin som inte är utvecklat av Lantmäteriet.
+version=0.1.1
 author=Mats Elfström
 email=mats.elfstrom@gmail.com
 category=Web
