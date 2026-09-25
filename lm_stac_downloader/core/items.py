@@ -19,6 +19,7 @@ class StacItem:
     crs: str | None
     proj_bbox: tuple[float, ...] = ()
     cog: bool = False
+    spectral: str | None = None  # e.g. "rgb" or "cir" for orthophotos
 
     @property
     def filename(self) -> str:
@@ -51,6 +52,7 @@ def parse_item(feature: dict[str, Any]) -> StacItem | None:
         crs=data.get("proj:code") or props.get("proj:code"),
         proj_bbox=tuple(data.get("proj:bbox") or props.get("proj:bbox") or ()),
         cog="cloud-optimized" in (data.get("type") or "").lower(),
+        spectral=props.get("spektraltyp"),
     )
 
 

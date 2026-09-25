@@ -57,7 +57,7 @@ Sökningen tar som mest 1000 träffar. Blir det fler visas ett meddelande. Snäv
 
 ## 3. Välj rutor
 
-Träffarna listas med rutans namn, kollektion (för ortofoto områdets namn och år), år, upplösning och filstorlek. Klicka på
+Träffarna listas med rutans namn, kollektion (för ortofoto områdets namn och år), bildtyp (till exempel `rgb` för färg och `cir` för färginfraröd), år, upplösning och filstorlek. Klicka på
 kolumnrubrikerna för att sortera.
 
 Markera rutor genom att:
@@ -101,8 +101,8 @@ Filerna är stora:
 Rutorna är Cloud Optimized GeoTIFF, alltså filer där en läsare kan hämta just de delar den behöver. Med
 **Hämta bara det valda området (utsnitt)** hämtas därför bara de delar som täcker området du sökte på.
 
-* Rutorna som området berör **slås ihop till en fil per kollektion**. För ortofoto blir det alltså en fil per år.
-* Filen heter `<kollektion>_utsnitt_<minx>_<miny>_<maxx>_<maxy>.tif`, med koordinater i filens eget koordinatsystem.
+* Rutorna som området berör **slås ihop till en fil per kollektion och bildtyp**. För ortofoto blir det alltså en fil per år, och färgbilder (`rgb`) och färginfraröda bilder (`cir`) av samma ruta hamnar i varsin fil.
+* Filen heter `<kollektion>[_<bildtyp>]_utsnitt_<minx>_<miny>_<maxx>_<maxy>.tif`, med koordinater i filens eget koordinatsystem.
 * Koordinatsystemet, upplösningen och banden behålls som i originalet.
 * Storleken följer området. Ett litet område ger några MB, medan en yta större än en ruta ger stora filer.
 * Rutor som ligger helt utanför området hoppas över. Rutor som inte är Cloud Optimized GeoTIFF kan inte klippas.

@@ -4,7 +4,12 @@ The rasters served by Lantmäteriet are Cloud Optimized GeoTIFFs (512 x 512
 tiles with overviews), so GDAL can read just the tiles that cover an area over
 HTTP range requests instead of fetching the whole file. GDAL does not know
 about QGIS' authentication, so the `Authorization` header is taken from the QGIS
-authentication manager and handed over as a thread-local GDAL option.
+authentication manager and handed over as a GDAL option.
+
+The option is path-specific (only requests to the download host get it) and not
+thread-local: large reads are split over GDAL's own worker threads, which do not
+inherit thread-local options and would send their range requests without the
+header (HTTP 401, "TIFFReadEncodedTile() failed").
 """
 
 from __future__ import annotations
@@ -12,6 +17,7 @@ from __future__ import annotations
 import os
 import time
 from pathlib import Path
+from urllib.parse import urlparse
 
 from osgeo import gdal
 from qgis.core import (
@@ -67,8 +73,9 @@ def covered_fraction(item: StacItem, bounds: Bounds) -> float:
     return (bounds[2] - bounds[0]) * (bounds[3] - bounds[1]) / tile_area
 
 
-def mosaic_path(output_dir: Path, collection: str, bounds: Bounds) -> Path:
-    name = f"{collection}_utsnitt_{round(bounds[0])}_{round(bounds[1])}_{round(bounds[2])}_{round(bounds[3])}.tif"
+def mosaic_path(output_dir: Path, collection: str, spectral: str | None, bounds: Bounds) -> Path:
+    kind = f"_{spectral}" if spectral else ""
+    name = f"{collection}{kind}_utsnitt_{round(bounds[0])}_{round(bounds[1])}_{round(bounds[2])}_{round(bounds[3])}.tif"
     return output_dir / collection / name
 
 
@@ -96,18 +103,19 @@ class ClipTask(QgsTask):
         self.failures: list[str] = []
 
     def run(self) -> bool:
-        # One output per collection (and CRS): the tiles the area touches are
-        # mosaicked into a single file, which is what a user drawing an area expects.
+        # One output per collection, CRS and spectral type: the tiles the area touches
+        # are mosaicked into a single file, which is what a user drawing an area expects.
+        # Colour (rgb) and infrared (cir) images of the same tile must stay apart.
         groups: dict[tuple, list[tuple[StacItem, Bounds]]] = {}
         for item, bounds in self.jobs:
-            groups.setdefault((item.collection, item.crs), []).append((item, bounds))
-        for index, ((collection, _crs), members) in enumerate(groups.items(), start=1):
+            groups.setdefault((item.collection, item.crs, item.spectral), []).append((item, bounds))
+        for index, ((collection, _crs, spectral), members) in enumerate(groups.items(), start=1):
             if self.isCanceled():
                 return False
             try:
-                self._clip_group(index, len(groups), collection, members)
+                self._clip_group(index, len(groups), collection, spectral, members)
             except Exception as e:  # noqa: BLE001 — report any failure per group
-                self.failures.append(f"{collection}: {e}")
+                self.failures.append(f"{collection}{f' ({spectral})' if spectral else ''}: {e}")
         return True
 
     def _authorization(self, href: str) -> str:
@@ -120,27 +128,27 @@ class ClipTask(QgsTask):
             raise RuntimeError("kunde inte hämta inloggning från QGIS autentiseringshanterare")
         return header
 
-    def _clip_group(self, index: int, count: int, collection: str, members: list) -> None:
+    def _clip_group(self, index: int, count: int, collection: str, spectral: str | None, members: list) -> None:
         bounds = union_bounds([b for _item, b in members])
-        final = mosaic_path(self.output_dir, collection, bounds)
+        final = mosaic_path(self.output_dir, collection, spectral, bounds)
         if final.exists():
             self.paths.append(str(final))
             return
         final.parent.mkdir(parents=True, exist_ok=True)
         part = final.with_name(final.name + ".part")
         vrt_path = f"/vsimem/lm_stac_{id(self)}_{index}.vrt"
-        label = f"{collection} ({len(members)} {'ruta' if len(members) == 1 else 'rutor'})"
+        label = f"{collection}{f' {spectral}' if spectral else ''} ({len(members)} {'ruta' if len(members) == 1 else 'rutor'})"
         first_href = members[0][0].href
 
+        prefix = "/vsicurl/https://" + urlparse(first_href).netloc + "/"
         options = {
             "GDAL_DISABLE_READDIR_ON_OPEN": "EMPTY_DIR",
             "GDAL_HTTP_TIMEOUT": "60",
             "GDAL_HTTP_MAX_RETRY": "3",
+            "GDAL_HTTP_HEADERS": f"Authorization: {self._authorization(first_href)}",
         }
-        # Thread-local, so nothing leaks into QGIS or other plugins.
         for key, value in options.items():
-            gdal.SetThreadLocalConfigOption(key, value)
-        gdal.SetThreadLocalConfigOption("GDAL_HTTP_HEADERS", f"Authorization: {self._authorization(first_href)}")
+            gdal.SetPathSpecificOption(prefix, key, value)
         last_refresh = time.monotonic()
         vrt = source = result = None
         try:
@@ -155,8 +163,8 @@ class ClipTask(QgsTask):
                 # GDAL reads the header option on every request, so a long clip can
                 # outlive the access token by renewing it here.
                 if time.monotonic() - last_refresh > TOKEN_REFRESH_SECONDS:
-                    gdal.SetThreadLocalConfigOption(
-                        "GDAL_HTTP_HEADERS", f"Authorization: {self._authorization(first_href)}"
+                    gdal.SetPathSpecificOption(
+                        prefix, "GDAL_HTTP_HEADERS", f"Authorization: {self._authorization(first_href)}"
                     )
                     last_refresh = time.monotonic()
                 return 0 if self.isCanceled() else 1
@@ -179,10 +187,13 @@ class ClipTask(QgsTask):
             self.paths.append(str(final))
         finally:
             result = vrt = source = None
-            gdal.Unlink(vrt_path)
             part.unlink(missing_ok=True)
-            for key in (*options, "GDAL_HTTP_HEADERS"):
-                gdal.SetThreadLocalConfigOption(key, None)
+            for key in options:
+                gdal.SetPathSpecificOption(prefix, key, None)
+            try:
+                gdal.Unlink(vrt_path)
+            except RuntimeError:  # GDAL exceptions are on in QGIS; nothing to remove
+                pass
 
     def finished(self, result: bool) -> None:
         cancelled = self.isCanceled()

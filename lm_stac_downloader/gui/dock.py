@@ -63,7 +63,7 @@ from ..core.items import StacItem
 from ..core.task import SearchTask
 from .auth_dialog import CreateAuthDialog
 
-COL_NAME, COL_COLLECTION, COL_YEAR, COL_RES, COL_SIZE = range(5)
+COL_NAME, COL_COLLECTION, COL_SPECTRAL, COL_YEAR, COL_RES, COL_SIZE = range(6)
 
 
 def _format_bytes(size: int | None) -> str:
@@ -225,7 +225,7 @@ class StacDock(QDockWidget):
         self.tree.setRootIsDecorated(False)
         self.tree.setSortingEnabled(True)
         self.tree.setMinimumHeight(200)
-        self.tree.setHeaderLabels(["Ruta", "Kollektion", "År", "Upplösning", "Storlek"])
+        self.tree.setHeaderLabels(["Ruta", "Kollektion", "Typ", "År", "Upplösning", "Storlek"])
         self.tree.itemChanged.connect(self._update_summary)
         layout.addWidget(self.tree)
 
@@ -447,6 +447,7 @@ class StacDock(QDockWidget):
                 [
                     item.id,
                     item.collection,
+                    item.spectral or "",
                     str(item.year or ""),
                     f"{item.resolution:g} m" if item.resolution else "",
                     _format_bytes(item.size),
@@ -462,7 +463,7 @@ class StacDock(QDockWidget):
             self._rows[(item.collection, item.id)] = row
         self.tree.setSortingEnabled(True)
         self.tree.blockSignals(False)
-        for column in range(5):
+        for column in range(self.tree.columnCount()):
             self.tree.resizeColumnToContents(column)
         self._update_summary()
 
