@@ -115,7 +115,8 @@ Ett exempel: fyra ortofotorutor (2,6 GB) som möts i ett hörn gav ett utsnitt p
 Höjdsökningen kan ge träffar i två sorters kollektioner. I kolumnen *Typ* syns rutstorleken:
 
 * **`dtm-cog`, 10 km-blad**: blad om 10 × 10 km, cirka 290 MB. Det är Lantmäteriets nya format, med brytgeometrier i GeoPackage
-  för ytor där vatten har plattats till, och en infofil med metadata.
+  för ytor där vatten har plattats till, och en infofil med metadata. Blad vid kusten och gränsen är avskurna till den del
+  som är land och kan därför vara mindre (till exempel 10 × 5 km eller bara några MB), men de räknas ändå som 10 km-blad.
 * **`mhm-*`, 2,5 km-ruta**: de äldre rutorna om 2,5 × 2,5 km, cirka 8–10 MB. Enligt Lantmäteriet slutade de uppdateras
   15 juni och avvecklas på sikt. Något slutdatum anges inte.
 

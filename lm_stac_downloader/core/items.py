@@ -29,7 +29,16 @@ class StacItem:
 
     @property
     def tile_label(self) -> str:
-        """Tile size from the extent, e.g. "2,5 km-ruta" or "10 km-blad". Empty if unknown."""
+        """Tile size, e.g. "2,5 km-ruta" or "10 km-blad". Empty if unknown.
+
+        The extent cannot be trusted for the 10 km sheets (`dtm-cog`): sheets at the
+        coast and the border are cut to the land that exists, so they can be 10 x 5,
+        7,5 x 10 or 2,5 x 5 km. The size follows the collection where it is known.
+        """
+        if self.collection == "dtm-cog":
+            return "10 km-blad"
+        if self.collection.startswith("mhm-"):
+            return "2,5 km-ruta"
         if len(self.proj_bbox) != 4:
             return ""
         km = (self.proj_bbox[2] - self.proj_bbox[0]) / 1000
