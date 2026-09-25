@@ -24,9 +24,14 @@ class StacItem:
 
 
 def parse_item(feature: dict[str, Any]) -> StacItem | None:
-    """Return None for items without a downloadable `data` asset."""
+    """Return None for items without a downloadable raster `data` asset.
+
+    stac-hojd also serves point clouds (COPC/LAZ), which are not rasters.
+    """
     data = (feature.get("assets") or {}).get("data")
     if not data or not data.get("href"):
+        return None
+    if "tiff" not in (data.get("type") or "").lower():
         return None
     props = feature.get("properties") or {}
     year = props.get("flygar")

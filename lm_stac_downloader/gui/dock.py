@@ -9,14 +9,11 @@ from qgis.core import (
     QgsApplication,
     QgsCoordinateReferenceSystem,
     QgsCoordinateTransform,
-    QgsFeature,
-    QgsField,
     QgsGeometry,
     QgsProject,
     QgsRasterLayer,
     QgsRectangle,
     QgsSettings,
-    QgsVectorLayer,
 )
 from qgis.gui import QgsAuthConfigSelect, QgsFileWidget, QgsMapToolExtent, QgsRubberBand
 from qgis.PyQt.QtCore import Qt
@@ -56,17 +53,7 @@ from ..core.items import StacItem
 from ..core.task import SearchTask
 from .auth_dialog import CreateAuthDialog
 
-try:  # QGIS >= 3.30
-    from qgis.PyQt.QtCore import QMetaType
-
-    _STRING, _INT, _DOUBLE = QMetaType.Type.QString, QMetaType.Type.Int, QMetaType.Type.Double
-except (ImportError, AttributeError):  # older QGIS 3 uses QVariant types
-    from qgis.PyQt.QtCore import QVariant
-
-    _STRING, _INT, _DOUBLE = QVariant.String, QVariant.Int, QVariant.Double
-
 COL_NAME, COL_COLLECTION, COL_YEAR, COL_RES, COL_SIZE = range(5)
-FOOTPRINT_LAYER = "LM-STAC träffar"
 
 
 def _format_bytes(size: int | None) -> str:
@@ -100,7 +87,7 @@ class StacDock(QDockWidget):
         self.area: QgsRectangle | None = None  # WGS 84
         self._search_task: SearchTask | None = None
         self._queue: DownloadQueue | None = None
-        self._footprints: QgsVectorLayer | None = None
+        self._geometries: dict[tuple[str, str], QgsGeometry] = {}
         self._previous_tool = None
 
         self._tool = QgsMapToolExtent(self.canvas)
@@ -110,6 +97,14 @@ class StacDock(QDockWidget):
         self._band.setColor(QColor(200, 40, 40, 200))
         self._band.setFillColor(QColor(200, 40, 40, 40))
         self._band.setWidth(2)
+        self._hits_band = QgsRubberBand(self.canvas, _polygon_type())
+        self._hits_band.setColor(QColor(40, 90, 200, 220))
+        self._hits_band.setFillColor(QColor(0, 0, 0, 0))
+        self._hits_band.setWidth(1)
+        self._selected_band = QgsRubberBand(self.canvas, _polygon_type())
+        self._selected_band.setColor(QColor(230, 120, 0, 240))
+        self._selected_band.setFillColor(QColor(230, 120, 0, 70))
+        self._selected_band.setWidth(2)
 
         body = QWidget()
         layout = QVBoxLayout(body)
@@ -132,7 +127,8 @@ class StacDock(QDockWidget):
             self._queue.cancel()
         if self._search_task:
             self._search_task.cancel()
-        self._band.reset(_polygon_type())
+        for band in (self._band, self._hits_band, self._selected_band):
+            band.reset(_polygon_type())
         if self.canvas.mapTool() is self._tool:
             self.canvas.unsetMapTool(self._tool)
         self._save_settings()
@@ -437,44 +433,36 @@ class StacDock(QDockWidget):
         if unknown:
             text += f" (+{unknown} med okänd storlek)"
         self.summary_label.setText(text)
+        self._update_selected_band()
 
     def _show_footprints(self) -> None:
-        """Show the hits as footprints in a temporary layer."""
-        if self._footprints is not None:
-            QgsProject.instance().removeMapLayer(self._footprints.id())
-            self._footprints = None
-        if not self.items:
-            return
-        layer = QgsVectorLayer(f"Polygon?crs={SEARCH_CRS}", FOOTPRINT_LAYER, "memory")
-        provider = layer.dataProvider()
-        provider.addAttributes(
-            [
-                QgsField("id", _STRING),
-                QgsField("kollektion", _STRING),
-                QgsField("ar", _INT),
-                QgsField("upplosning", _DOUBLE),
-                QgsField("storlek_mb", _DOUBLE),
-            ]
-        )
-        layer.updateFields()
-        features = []
-        for item in self.items:
-            feature = QgsFeature(layer.fields())
-            feature.setGeometry(_item_geometry(item))
-            feature.setAttributes(
-                [
-                    item.id,
-                    item.collection,
-                    item.year,
-                    item.resolution,
-                    round(item.size / 1024**2, 1) if item.size else None,
-                ]
+        """Draw the hits as outlines on the canvas.
+
+        Rubber bands are used instead of a project layer: they never touch the
+        project's layer list, which crashed QGIS when a layer was added from
+        the search task's completion slot.
+        """
+        self._geometries = {(i.collection, i.id): _item_geometry(i) for i in self.items}
+        self._hits_band.reset(_polygon_type())
+        if self._geometries:
+            self._hits_band.setToGeometry(
+                QgsGeometry.collectGeometry(list(self._geometries.values())),
+                QgsCoordinateReferenceSystem(SEARCH_CRS),
             )
-            features.append(feature)
-        provider.addFeatures(features)
-        layer.updateExtents()
-        QgsProject.instance().addMapLayer(layer)
-        self._footprints = layer
+        self._update_selected_band()
+
+    def _update_selected_band(self) -> None:
+        self._selected_band.reset(_polygon_type())
+        geometries = [
+            self._geometries[(i.collection, i.id)]
+            for i in self._checked_items()
+            if (i.collection, i.id) in self._geometries
+        ]
+        if geometries:
+            self._selected_band.setToGeometry(
+                QgsGeometry.collectGeometry(geometries),
+                QgsCoordinateReferenceSystem(SEARCH_CRS),
+            )
 
     # --- download --------------------------------------------------------
 
