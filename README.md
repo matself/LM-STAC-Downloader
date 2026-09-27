@@ -27,7 +27,7 @@ Point clouds, vector data and NGP catalogues are not included. For NGP, see
 
 ## Install
 
-The plugin is not in the official plugin repository. Instead, add this repository as a plugin source in QGIS:
+Add this repository as a plugin source in QGIS:
 
 1. *Plugins → Manage and Install Plugins → Settings → Add…*
 2. URL: `https://raw.githubusercontent.com/matself/LM-STAC-Downloader/main/plugins.xml`
