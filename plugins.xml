@@ -1,22 +1,22 @@
 <?xml version='1.0' encoding='utf-8'?>
 <plugins>
-  <pyqgis_plugin name="Geodata Downloader (Lantmäteriet)" version="0.1.4" plugin_id="lm_stac_downloader">
-    <description>Sök och hämta ortofoto och höjddata från Lantmäteriets STAC-tjänster, direkt från kartan</description>
-    <about>Söker i Lantmäteriets STAC-tjänster för ortofoto och höjddata med kartstöd, och hämtar valda rasterfiler. Autentisering sker via QGIS inbyggda autentiseringshanterare (OAuth2). Fristående plugin som inte är utvecklat av Lantmäteriet.</about>
-    <version>0.1.4</version>
+  <pyqgis_plugin name="Geodata Downloader (Lantmäteriet)" version="1.0.0" plugin_id="lm_stac_downloader">
+    <description>Search and download orthophotos and elevation data from Lantmäteriet's STAC services, directly from the map</description>
+    <about>Searches Lantmäteriet's (the Swedish mapping, cadastral and land registration authority) STAC services for orthophotos and elevation data with map-based search, and downloads the selected raster files. Authentication uses QGIS' built-in authentication manager (OAuth2). Covers Sweden only, since it queries a Swedish data provider; requires access keys ordered through Lantmäteriet's Geotorget. The user interface is in Swedish; see the "User interface" section in the README for an English explanation of every dialog and label. Independent plugin, not developed by Lantmäteriet.</about>
+    <version>1.0.0</version>
     <qgis_minimum_version>3.44</qgis_minimum_version>
     <qgis_maximum_version>3.99</qgis_maximum_version>
     <supports_qt6>False</supports_qt6>
     <homepage>https://github.com/matself/LM-STAC-Downloader</homepage>
-    <file_name>lm_stac_downloader.0.1.4.zip</file_name>
+    <file_name>lm_stac_downloader.1.0.0.zip</file_name>
     <icon>https://raw.githubusercontent.com/matself/LM-STAC-Downloader/main/lm_stac_downloader/icon.png</icon>
     <author_name>Mats Elfström</author_name>
-    <download_url>https://github.com/matself/LM-STAC-Downloader/releases/download/v0.1.4/lm_stac_downloader.0.1.4.zip</download_url>
+    <download_url>https://github.com/matself/LM-STAC-Downloader/releases/download/v1.0.0/lm_stac_downloader.1.0.0.zip</download_url>
     <uploaded_by>Mats Elfström</uploaded_by>
-    <experimental>True</experimental>
+    <experimental>False</experimental>
     <deprecated>False</deprecated>
     <tracker>https://github.com/matself/LM-STAC-Downloader/issues</tracker>
     <repository>https://github.com/matself/LM-STAC-Downloader</repository>
-    <tags>lantmäteriet,stac,ortofoto,höjddata,raster,sverige</tags>
+    <tags>lantmateriet,stac,orthophoto,elevation data,dem,raster,sweden</tags>
   </pyqgis_plugin>
 </plugins>
