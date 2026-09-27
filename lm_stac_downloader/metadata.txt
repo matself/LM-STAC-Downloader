@@ -2,18 +2,22 @@
 name=Geodata Downloader (Lantmäteriet)
 qgisMinimumVersion=3.44
 qgisMaximumVersion=3.99
-supportsQt6=False
-description=Sök och hämta ortofoto och höjddata från Lantmäteriets STAC-tjänster, direkt från kartan
-about=Söker i Lantmäteriets STAC-tjänster för ortofoto och höjddata med kartstöd, och hämtar valda rasterfiler. Autentisering sker via QGIS inbyggda autentiseringshanterare (OAuth2). Fristående plugin som inte är utvecklat av Lantmäteriet.
+description=Search and download orthophotos and elevation data from Lantmäteriet's STAC services, directly from the map
+about=Searches Lantmäteriet's (the Swedish mapping, cadastral and land registration authority) STAC services for orthophotos and elevation data with map-based search, and downloads the selected raster files. Authentication uses QGIS' built-in authentication manager (OAuth2). Covers Sweden only, since it queries a Swedish data provider; requires access keys ordered through Lantmäteriet's Geotorget. The user interface is in Swedish; see the "User interface" section in the README for an English explanation of every dialog and label. Independent plugin, not developed by Lantmäteriet.
 version=0.1.4
 author=Mats Elfström
 email=mats.elfstrom@gmail.com
 category=Web
 icon=icon.png
-tags=lantmäteriet,stac,ortofoto,höjddata,raster,sverige
+tags=lantmateriet,stac,orthophoto,elevation data,dem,raster,sweden
 license=GPL-2.0-or-later
 experimental=True
 deprecated=False
 homepage=https://github.com/matself/LM-STAC-Downloader
 repository=https://github.com/matself/LM-STAC-Downloader
 tracker=https://github.com/matself/LM-STAC-Downloader/issues
+changelog=0.1.4: Label dtm-cog sheets as 10 km tiles even when cut off at the coast
+    0.1.3: Label elevation tiles by size and show when they were last changed
+    0.1.2: Fix 401 error on large clips (path-specific GDAL auth) and keep colour and infrared tiles apart
+    0.1.1: Renamed to Geodata Downloader (Lantmäteriet); state that the plugin is independent of Lantmäteriet
+    0.1.0: First release: map-based search and download of orthophoto and elevation rasters, partial download of COG clips, build script and usage guide

@@ -2,75 +2,141 @@
 
 # Geodata Downloader (Lantmäteriet)
 
-QGIS-plugin för att söka och hämta **rasterdata** från Lantmäteriets STAC-tjänster, med sökning direkt i kartan.
+A QGIS plugin for searching and downloading **raster data** from Lantmäteriet's (the Swedish mapping,
+cadastral and land registration authority) STAC services, with map-based search.
 
-> **Fristående plugin.** Det här pluginet är inte utvecklat, granskat eller supportat av Lantmäteriet. Namnet Lantmäteriet används bara för att säga vilka tjänster pluginet fungerar mot. Frågor om pluginet ställer du i [det här repots ärenden](https://github.com/matself/LM-STAC-Downloader/issues), inte till Lantmäteriets support. Data hämtas från Lantmäteriets tjänster och omfattas av deras användningsvillkor.
+> **Independent plugin.** This plugin is not developed, reviewed or supported by Lantmäteriet. The name
+> Lantmäteriet is used only to state which services the plugin works against. Questions about the plugin
+> belong in [this repository's issues](https://github.com/matself/LM-STAC-Downloader/issues), not with
+> Lantmäteriet's support. Data is fetched from Lantmäteriet's services and is subject to their terms of use.
 
-Rita en ruta i kartan, se vilka ortofoton eller höjdrutor som täcker den, markera de du vill ha och hämta dem. Rutorna
-är stora (en ortofotoruta är cirka 640 MB), så pluginet kan också hämta **bara det utsnitt du valt** och slå ihop det till
-en enda fil.
+Draw a box on the map, see which orthophoto or elevation tiles cover it, select the ones you want and
+download them. The tiles are large (an orthophoto tile is roughly 640 MB), so the plugin can also download
+**only the clip you selected** and mosaic it into a single file.
 
-| Data | Tjänst |
+Covers Sweden only: it queries Lantmäteriet's Swedish STAC services and requires access keys for a system
+account ordered through Lantmäteriet's Geotorget (see [Permissions](#permissions)).
+
+| Data | Service |
 |---|---|
-| Ortofoto | `https://api.lantmateriet.se/stac-bild/v1` |
-| Höjddata (markhöjdmodell) | `https://api.lantmateriet.se/stac-hojd/v1` |
+| Orthophoto | `https://api.lantmateriet.se/stac-bild/v1` |
+| Elevation data (digital terrain model) | `https://api.lantmateriet.se/stac-hojd/v1` |
 
-Punktmoln, vektordata och NGP-kataloger ingår inte. För NGP, se [ngp-downloader](https://github.com/matself/ngp-downloader).
+Point clouds, vector data and NGP catalogues are not included. For NGP, see
+[ngp-downloader](https://github.com/matself/ngp-downloader).
 
-## Installera
+## Install
 
-Pluginet finns inte i det officiella plugin-repot. Lägg i stället till det här repot som plugin-källa i QGIS:
+The plugin is not in the official plugin repository. Instead, add this repository as a plugin source in QGIS:
 
-1. *Insticksprogram → Hantera och installera → Inställningar → Lägg till…*
+1. *Plugins → Manage and Install Plugins → Settings → Add…*
 2. URL: `https://raw.githubusercontent.com/matself/LM-STAC-Downloader/main/plugins.xml`
-3. Kryssa i *Visa även experimentella insticksprogram* (pluginet är markerat experimentellt).
-4. Sök efter *Geodata Downloader (Lantmäteriet)* och installera. Nya versioner visas sedan som vanliga uppdateringar.
+3. Tick *Show also experimental plugins* (the plugin is marked experimental).
+4. Search for *Geodata Downloader (Lantmäteriet)* and install. New versions then show up as regular updates.
 
-Alternativt: hämta zip-filen under [Releases](https://github.com/matself/LM-STAC-Downloader/releases) och välj
-*Installera från ZIP*.
+Alternatively, download the zip from [Releases](https://github.com/matself/LM-STAC-Downloader/releases) and
+use *Install from ZIP*.
 
-Kräver **QGIS 3.44 eller senare** (OAuth 2-flödet Client Credentials).
+Requires **QGIS 3.44 or later** (the OAuth2 Client Credentials flow).
 
-## Kom igång
+## Getting started
 
-1. Skaffa åtkomstnycklar (Consumer Key och Consumer Secret) från Lantmäteriets API-manager, för ett systemkonto som har
-   beställt *Ortofoto Nedladdning* och/eller *Markhöjdmodell Nedladdning* på Geotorget.
-2. Öppna panelen via webbmenyn eller verktygsfältet. Klicka på *Ny Lantmäteriet-inloggning…* och ange nycklarna.
-3. Välj tjänst, rita en ruta i kartan, sök, markera rutor och hämta.
+1. Get access keys (Consumer Key and Consumer Secret) from Lantmäteriet's API manager, for a system account
+   that has ordered *Ortofoto Nedladdning* and/or *Markhöjdmodell Nedladdning* on Geotorget.
+2. Open the panel from the web menu or the toolbar. Click *New Lantmäteriet login…* and enter the keys.
+3. Pick a service, draw a box on the map, search, select tiles and download.
 
-Se **[användningsbeskrivningen](docs/anvandning.md)** för alla steg, hur utsnitt fungerar, och felsökning.
+The user interface is in Swedish; the [User interface](#user-interface) section below explains every
+dialog and label in English. For the full walkthrough (in Swedish), including how clipping works and
+troubleshooting, see **[docs/anvandning.md](docs/anvandning.md)**.
 
-## Behörigheter
+## User interface
 
-Sökning fungerar med alla giltiga nycklar, men nedladdning kräver att nycklarna hör till ett systemkonto som har beställt
-*Ortofoto Nedladdning* respektive *Markhöjdmodell Nedladdning* (produktion) på Geotorget. Nycklar för Nationella
-geodataplattformen (NGP-konsument) har inte den behörigheten i produktion. Pluginet lagrar inga inloggningsuppgifter,
-utan använder QGIS autentiseringshanterare.
+The plugin's user interface (labels, buttons and messages) is in Swedish. This section explains it in
+English so the plugin can be reviewed and tested without knowing Swedish.
 
-## Begränsningar
+### Main dock panel
 
-* Sökningen begränsas till 1000 träffar.
-* Utsnittet följer området du sökte på, inte kartvyn vid hämtningstillfället.
-* Höjdsökningen returnerar både `mhm-*` (rutor om 2,5 km, cirka 8 MB) och `dtm-cog` (10 km-blad, cirka 290 MB).
-* Pluginet är testat mot QGIS 3.44 (Qt5). QGIS 4 / Qt6 är inte provat.
+Opened from the web menu or the web toolbar (button *Geodata Downloader (Lantmäteriet)*). It has three
+groups: *Anslutning* (connection), *Sökning* (search) and, once there are hits, *Träffar* (hits) and
+*Hämta* (download).
 
-## Utveckling
+| Swedish label | English meaning | What it does |
+|---|---|---|
+| Anslutning | Connection | Group with the login button |
+| Ny Lantmäteriet-inloggning… | New Lantmäteriet login… | Opens the login dialog (see below) |
+| Sökning | Search | Group with the search controls |
+| Flygår | Aerial survey year | Year filter for orthophoto search (has no effect for elevation data) |
+| Använd kartvyn | Use map view | Uses the current map extent as the search area |
+| Rita ruta | Draw box | Lets you draw a rectangle on the map as the search area |
+| Inget område valt | No area selected | Shown until a search area has been set |
+| Sök | Search | Runs the STAC search for the selected area and service |
+| Rensa sökområde och träffar | Clear search area and hits | Removes the search box and the blue/orange result boxes from the map |
+| Träffar | Hits | Group listing the search results as a tree (collection, type, year, name) |
+| Välj rutor i kartan | Pick tiles on the map | Toggle: click a tile on the map to select or deselect it |
+| Markera alla | Select all | Selects every hit |
+| Avmarkera alla | Deselect all | Deselects every hit |
+| Hämta | Download | Group with the download controls |
+| Hämta bara det valda området (utsnitt) | Download only the selected area (clip) | If checked, only the drawn area is downloaded and mosaicked instead of the full tiles |
+| Lägg till i projektet när klart | Add to project when done | Adds the downloaded raster(s) to the QGIS project once finished |
+| Hämta valda | Download selected | Starts downloading the selected hits |
+| Avbryt | Cancel | Cancels an ongoing download |
+| Fristående plugin, inte utvecklat av Lantmäteriet. | Independent plugin, not developed by Lantmäteriet. | Disclaimer label shown in the panel |
 
-Koden ligger i `lm_stac_downloader/`. Koppla in den i en QGIS-profil genom att länka eller kopiera mappen till profilens
-`python/plugins`.
+### Login dialog ("Ny inloggning för Lantmäteriet" / New Lantmäteriet login)
 
-Ny version:
+Opened by *Ny Lantmäteriet-inloggning…*. Creates an OAuth2 (client credentials) authentication
+configuration in QGIS' own authentication manager; the key and secret are stored encrypted by QGIS, not
+by the plugin.
 
-1. Höj `version` i `lm_stac_downloader/metadata.txt` och committa.
-2. `python build.py` skapar `dist/lm_stac_downloader.<version>.zip` och uppdaterar `plugins.xml`.
-3. Committa `plugins.xml`, pusha och skapa releasen:
+| Swedish label | English meaning | What it does |
+|---|---|---|
+| Namn | Name | Name of the QGIS authentication configuration (defaults to "Lantmäteriet STAC") |
+| Consumer Key | Consumer Key | The OAuth2 client id from Lantmäteriet's API manager |
+| Consumer Secret | Consumer Secret | The OAuth2 client secret from Lantmäteriet's API manager |
+
+### Messages
+
+| Swedish message | English meaning | When it appears |
+|---|---|---|
+| Inget område valt | No area selected | No search area has been set yet |
+| Ange både Consumer Key och Consumer Secret. | Enter both Consumer Key and Consumer Secret. | One of the two login fields is empty |
+| Utsnitt {n} av {N}: {namn} ({procent} %) | Clip {n} of {N}: {name} ({percent}%) | Progress while clipping/downloading |
+| Avbryter… | Cancelling… | Shown while a download is being cancelled |
+| åtkomst nekad. Sökningen fungerade, men den valda autentiseringen får inte hämta filer. … | Access denied. The search worked, but the selected credentials are not allowed to download files. Check that the keys belong to a system account that has ordered *Ortofoto Nedladdning* or *Markhöjdmodell Nedladdning* (production) on Geotorget, and that the application subscribes to STAC-bild and/or STAC-hojd. | The download host returns HTTP 403 (Forbidden) |
+
+## Permissions
+
+Search works with any valid keys, but downloading requires that the keys belong to a system account that
+has ordered *Ortofoto Nedladdning* and *Markhöjdmodell Nedladdning* (production) on Geotorget respectively.
+Keys for Nationella geodataplattformen (NGP consumer) do not have that permission in production. The plugin
+does not store any credentials itself; it uses QGIS' authentication manager.
+
+## Limitations
+
+* Search is limited to 1000 hits.
+* The clip follows the area you searched on, not the map view at download time.
+* Elevation search returns both `mhm-*` (2.5 km tiles, roughly 8 MB) and `dtm-cog` (10 km tiles, roughly
+  290 MB).
+* The plugin is tested against QGIS 3.44 (Qt5). QGIS 4 / Qt6 has not been tested.
+
+## Development
+
+The code lives in `lm_stac_downloader/`. Hook it into a QGIS profile by linking or copying the folder into
+the profile's `python/plugins`.
+
+New version:
+
+1. Bump `version` in `lm_stac_downloader/metadata.txt` and commit.
+2. `python build.py` creates `dist/lm_stac_downloader.<version>.zip` and updates `plugins.xml`.
+3. Commit `plugins.xml`, push and create the release:
    ```
    gh release create v<version> dist/lm_stac_downloader.<version>.zip --title "v<version>"
    ```
 
-För en intern källa, till exempel en nätverksdisk: `python build.py --base-url file:///S:/qgis-plugins` och kopiera
-zip-filen och `plugins.xml` dit.
+For an internal source, for example a network drive: `python build.py --base-url file:///S:/qgis-plugins`
+and copy the zip file and `plugins.xml` there.
 
-## Licens
+## License
 
-GPL-2.0-or-later, se [LICENSE](LICENSE).
+GPL-2.0-or-later, see [LICENSE](LICENSE).
