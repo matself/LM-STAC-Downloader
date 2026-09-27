@@ -31,8 +31,7 @@ The plugin is not in the official plugin repository. Instead, add this repositor
 
 1. *Plugins → Manage and Install Plugins → Settings → Add…*
 2. URL: `https://raw.githubusercontent.com/matself/LM-STAC-Downloader/main/plugins.xml`
-3. Tick *Show also experimental plugins* (the plugin is marked experimental).
-4. Search for *Geodata Downloader (Lantmäteriet)* and install. New versions then show up as regular updates.
+3. Search for *Geodata Downloader (Lantmäteriet)* and install. New versions then show up as regular updates.
 
 Alternatively, download the zip from [Releases](https://github.com/matself/LM-STAC-Downloader/releases) and
 use *Install from ZIP*.
