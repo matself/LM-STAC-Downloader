@@ -1,6 +1,6 @@
 <img src="lm_stac_downloader/icon.svg" alt="" width="72" align="right">
 
-# Geodata Downloader (Lantmäteriet)
+# Geodata: Ortofoto & höjd (Lantmäteriet)
 
 A QGIS plugin for searching and downloading **raster data** from Lantmäteriet's (the Swedish mapping,
 cadastral and land registration authority) STAC services, with map-based search.
@@ -31,7 +31,7 @@ Add this repository as a plugin source in QGIS:
 
 1. *Plugins → Manage and Install Plugins → Settings → Add…*
 2. URL: `https://raw.githubusercontent.com/matself/LM-STAC-Downloader/main/plugins.xml`
-3. Search for *Geodata Downloader (Lantmäteriet)* and install. New versions then show up as regular updates.
+3. Search for *Geodata: Ortofoto & höjd (Lantmäteriet)* and install. New versions then show up as regular updates.
 
 Alternatively, download the zip from [Releases](https://github.com/matself/LM-STAC-Downloader/releases) and
 use *Install from ZIP*.
@@ -56,7 +56,7 @@ English so the plugin can be reviewed and tested without knowing Swedish.
 
 ### Main dock panel
 
-Opened from the web menu or the web toolbar (button *Geodata Downloader (Lantmäteriet)*). It has three
+Opened from the web menu or the web toolbar (button *Geodata: Ortofoto & höjd (Lantmäteriet)*). It has three
 groups: *Anslutning* (connection), *Sökning* (search) and, once there are hits, *Träffar* (hits) and
 *Hämta* (download).
 
