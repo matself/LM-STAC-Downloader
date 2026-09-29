@@ -1,5 +1,5 @@
 [general]
-name=Geodata Downloader (Lantmäteriet)
+name=Geodata: Ortofoto & höjd (Lantmäteriet)
 qgisMinimumVersion=3.44
 qgisMaximumVersion=3.99
 description=Search and download orthophotos and elevation data from Lantmäteriet's STAC services, directly from the map
