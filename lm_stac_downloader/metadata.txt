@@ -17,8 +17,7 @@ homepage=https://github.com/matself/LM-STAC-Downloader
 repository=https://github.com/matself/LM-STAC-Downloader
 tracker=https://github.com/matself/LM-STAC-Downloader/issues
 changelog=1.0.2: Dropped the self-hosted plugin-source install instructions -
-    install from the release zip for now, pending listing on the official
-    plugins.qgis.org repository.
+    install from the release zip for now.
     1.0.1: Renamed to "Geodata: Ortofoto & höjd (Lantmäteriet)" with a
     new icon, part of a shared naming/icon scheme across the four
     Lantmäteriet plugins.
