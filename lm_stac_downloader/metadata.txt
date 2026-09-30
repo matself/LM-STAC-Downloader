@@ -4,7 +4,7 @@ qgisMinimumVersion=3.44
 qgisMaximumVersion=3.99
 description=Search and download orthophotos and elevation data from Lantmäteriet's STAC services, directly from the map
 about=Searches Lantmäteriet's (the Swedish mapping, cadastral and land registration authority) STAC services for orthophotos and elevation data with map-based search, and downloads the selected raster files. Authentication uses QGIS' built-in authentication manager (OAuth2). Covers Sweden only, since it queries a Swedish data provider; requires access keys ordered through Lantmäteriet's Geotorget. The user interface is in Swedish; see the "User interface" section in the README for an English explanation of every dialog and label. Independent plugin, not developed by Lantmäteriet.
-version=1.0.2
+version=1.0.3
 author=Mats Elfström
 email=mats.elfstrom@gmail.com
 category=Web
@@ -16,7 +16,9 @@ deprecated=False
 homepage=https://github.com/matself/LM-STAC-Downloader
 repository=https://github.com/matself/LM-STAC-Downloader
 tracker=https://github.com/matself/LM-STAC-Downloader/issues
-changelog=1.0.2: Dropped the self-hosted plugin-source install instructions -
+changelog=1.0.3: Silenced a false-positive Bandit warning (B105) on the public
+    OAuth2 token endpoint URL.
+    1.0.2: Dropped the self-hosted plugin-source install instructions -
     install from the release zip for now.
     1.0.1: Renamed to "Geodata: Ortofoto & höjd (Lantmäteriet)" with a
     new icon, part of a shared naming/icon scheme across the four

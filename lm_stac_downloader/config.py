@@ -8,7 +8,7 @@ PLUGIN_NAME = "Geodata: Ortofoto & höjd (Lantmäteriet)"
 SETTINGS_PREFIX = "lm_stac_downloader"
 
 API_URL = "https://api.lantmateriet.se"
-TOKEN_URL = "https://apimanager.lantmateriet.se/oauth2/token"
+TOKEN_URL = "https://apimanager.lantmateriet.se/oauth2/token"  # nosec B105 - public endpoint URL, not a secret
 
 # The API takes the WGS 84 bbox/intersects of plain STAC.
 SEARCH_CRS = "EPSG:4326"
