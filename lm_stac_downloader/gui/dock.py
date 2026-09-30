@@ -1,4 +1,4 @@
-"""Main dock widget: pick auth, service and area, search, select and download."""
+﻿"""Main dock widget: pick auth, service and area, search, select and download."""
 
 from __future__ import annotations
 
@@ -108,15 +108,15 @@ class StacDock(QDockWidget):
         self._pick_tool.canvasClicked.connect(self._on_map_clicked)
         self._pick_tool.deactivated.connect(lambda: self.pick_btn.setChecked(False))
         self._rows: dict[tuple[str, str], QTreeWidgetItem] = {}
-        self._band = QgsRubberBand(self.canvas, _polygon_type())
+        self._band = QgsRubberBand(self.canvas, Qgis.GeometryType.Polygon)
         self._band.setColor(QColor(200, 40, 40, 200))
         self._band.setFillColor(QColor(200, 40, 40, 40))
         self._band.setWidth(2)
-        self._hits_band = QgsRubberBand(self.canvas, _polygon_type())
+        self._hits_band = QgsRubberBand(self.canvas, Qgis.GeometryType.Polygon)
         self._hits_band.setColor(QColor(40, 90, 200, 220))
         self._hits_band.setFillColor(QColor(0, 0, 0, 0))
         self._hits_band.setWidth(1)
-        self._selected_band = QgsRubberBand(self.canvas, _polygon_type())
+        self._selected_band = QgsRubberBand(self.canvas, Qgis.GeometryType.Polygon)
         self._selected_band.setColor(QColor(230, 120, 0, 240))
         self._selected_band.setFillColor(QColor(230, 120, 0, 70))
         self._selected_band.setWidth(2)
@@ -147,7 +147,7 @@ class StacDock(QDockWidget):
         if self._search_task:
             self._search_task.cancel()
         for band in (self._band, self._hits_band, self._selected_band):
-            band.reset(_polygon_type())
+            band.reset(Qgis.GeometryType.Polygon)
         for tool in (self._tool, self._pick_tool):
             if self.canvas.mapTool() is tool:
                 self.canvas.unsetMapTool(tool)
@@ -337,7 +337,7 @@ class StacDock(QDockWidget):
         target = QgsCoordinateReferenceSystem(SEARCH_CRS)
         transform = QgsCoordinateTransform(crs, target, QgsProject.instance())
         self.area = transform.transformBoundingBox(rect)
-        self._band.reset(_polygon_type())
+        self._band.reset(Qgis.GeometryType.Polygon)
         self._band.setToGeometry(QgsGeometry.fromRect(rect), crs)
         a = self.area
         self.area_label.setText(
@@ -370,7 +370,7 @@ class StacDock(QDockWidget):
     def _clear(self) -> None:
         """Remove the search area, the hits and their outlines from map and list."""
         for band in (self._band, self._hits_band, self._selected_band):
-            band.reset(_polygon_type())
+            band.reset(Qgis.GeometryType.Polygon)
         self.area = None
         self.area_label.setText("Inget område valt")
         self.items = []
@@ -502,7 +502,7 @@ class StacDock(QDockWidget):
         the search task's completion slot.
         """
         self._geometries = {(i.collection, i.id): _item_geometry(i) for i in self.items}
-        self._hits_band.reset(_polygon_type())
+        self._hits_band.reset(Qgis.GeometryType.Polygon)
         if self._geometries:
             self._hits_band.setToGeometry(
                 QgsGeometry.collectGeometry(list(self._geometries.values())),
@@ -511,7 +511,7 @@ class StacDock(QDockWidget):
         self._update_selected_band()
 
     def _update_selected_band(self) -> None:
-        self._selected_band.reset(_polygon_type())
+        self._selected_band.reset(Qgis.GeometryType.Polygon)
         geometries = [
             self._geometries[(i.collection, i.id)]
             for i in self._checked_items()
@@ -704,15 +704,6 @@ class StacDock(QDockWidget):
             self._message(f"Avbrutet. {len(paths)} filer hann hämtas.", Qgis.MessageLevel.Warning)
         else:
             self._message(f"{len(paths)} filer hämtade.", Qgis.MessageLevel.Success)
-
-
-def _polygon_type():
-    try:
-        return Qgis.GeometryType.Polygon
-    except AttributeError:  # QGIS < 3.30
-        from qgis.core import QgsWkbTypes
-
-        return QgsWkbTypes.PolygonGeometry
 
 
 def _item_geometry(item: StacItem) -> QgsGeometry:
