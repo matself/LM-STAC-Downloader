@@ -27,14 +27,8 @@ Point clouds, vector data and NGP catalogues are not included. For NGP, see
 
 ## Install
 
-Add this repository as a plugin source in QGIS:
-
-1. *Plugins → Manage and Install Plugins → Settings → Add…*
-2. URL: `https://raw.githubusercontent.com/matself/LM-STAC-Downloader/main/plugins.xml`
-3. Search for *Geodata: Ortofoto & höjd (Lantmäteriet)* and install. New versions then show up as regular updates.
-
-Alternatively, download the zip from [Releases](https://github.com/matself/LM-STAC-Downloader/releases) and
-use *Install from ZIP*.
+Download the zip from [Releases](https://github.com/matself/LM-STAC-Downloader/releases) and
+use *Plugins → Manage and Install Plugins → Install from ZIP*.
 
 Requires **QGIS 3.44 or later** (the OAuth2 Client Credentials flow).
 
