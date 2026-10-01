@@ -56,7 +56,6 @@ def build_plugins_xml(meta: dict[str, str], zip_name: str, base_url: str) -> Pat
         "version": meta["version"],
         "qgis_minimum_version": meta.get("qgisminimumversion", ""),
         "qgis_maximum_version": meta.get("qgismaximumversion", ""),
-        "supports_qt6": meta.get("supportsqt6", "False"),
         "homepage": meta.get("homepage", ""),
         "file_name": zip_name,
         "icon": ICON_URL,
