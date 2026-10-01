@@ -151,7 +151,7 @@ class ClipTask(QgsTask):
         for key, value in options.items():
             gdal.SetPathSpecificOption(prefix, key, value)
         last_refresh = time.monotonic()
-        vrt = source = result = None
+        vrt = result = None
         try:
             vrt = gdal.BuildVRT(vrt_path, ["/vsicurl/" + item.href for item, _b in members])
             if vrt is None:
