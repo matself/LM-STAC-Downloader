@@ -1,17 +1,17 @@
 <?xml version='1.0' encoding='utf-8'?>
 <plugins>
-  <pyqgis_plugin name="Geodata: Ortofoto &amp; höjd (Lantmäteriet)" version="1.0.6" plugin_id="lm_stac_downloader">
+  <pyqgis_plugin name="Geodata: Ortofoto &amp; höjd (Lantmäteriet)" version="1.0.7" plugin_id="lm_stac_downloader">
     <description>Search and download orthophotos and elevation data from Lantmäteriet's STAC services, directly from the map</description>
     <about>Searches Lantmäteriet's (the Swedish mapping, cadastral and land registration authority) STAC services for orthophotos and elevation data with map-based search, and downloads the selected raster files. Authentication uses QGIS' built-in authentication manager (OAuth2). Covers Sweden only, since it queries a Swedish data provider; requires access keys ordered through Lantmäteriet's Geotorget. The user interface is in Swedish; see the "User interface" section in the README for an English explanation of every dialog and label. Independent plugin, not developed by Lantmäteriet.</about>
-    <version>1.0.6</version>
+    <version>1.0.7</version>
     <qgis_minimum_version>3.44</qgis_minimum_version>
     <qgis_maximum_version>4.99</qgis_maximum_version>
     <supports_qt6>True</supports_qt6>
     <homepage>https://github.com/matself/LM-STAC-Downloader</homepage>
-    <file_name>lm_stac_downloader.1.0.6.zip</file_name>
+    <file_name>lm_stac_downloader.1.0.7.zip</file_name>
     <icon>https://raw.githubusercontent.com/matself/LM-STAC-Downloader/main/lm_stac_downloader/icon.png</icon>
     <author_name>Mats Elfström</author_name>
-    <download_url>https://github.com/matself/LM-STAC-Downloader/releases/download/v1.0.6/lm_stac_downloader.1.0.6.zip</download_url>
+    <download_url>https://github.com/matself/LM-STAC-Downloader/releases/download/v1.0.7/lm_stac_downloader.1.0.7.zip</download_url>
     <uploaded_by>Mats Elfström</uploaded_by>
     <experimental>False</experimental>
     <deprecated>False</deprecated>
