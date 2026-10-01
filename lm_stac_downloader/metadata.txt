@@ -17,7 +17,7 @@ deprecated=False
 homepage=https://github.com/matself/LM-STAC-Downloader
 repository=https://github.com/matself/LM-STAC-Downloader
 tracker=https://github.com/matself/LM-STAC-Downloader/issues
-changelog=1.0.6: Shortened the changelog shown in the plugin manager; full history in CHANGELOG.md in the repository.
+changelog=1.0.6: Clearer icon (bolder grid, smaller download arrow); shortened the changelog shown in the plugin manager, full history in CHANGELOG.md in the repository.
     1.0.5: QGIS 4 compatibility: raised qgisMaximumVersion to 4.99 and declared Qt6 support (supportsQt6=True); still works in QGIS 3.44+.
     1.0.4: Qt6 compatibility: use Qgis.GeometryType.Polygon directly instead of the removed QgsWkbTypes enum fallback.
     1.0.3: Silenced a false-positive Bandit warning (B105) on the public OAuth2 token endpoint URL.
