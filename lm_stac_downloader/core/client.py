@@ -69,7 +69,7 @@ class StacClient:
             yield page
 
             next_link = next(
-                (l for l in page.get("links", []) if l.get("rel") == "next"), None
+                (link for link in page.get("links", []) if link.get("rel") == "next"), None
             )
             if not next_link:
                 return
