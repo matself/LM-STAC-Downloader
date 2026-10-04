@@ -88,6 +88,27 @@ def union_bounds(all_bounds: list[Bounds]) -> Bounds:
     )
 
 
+def _build_vrt(vrt_path: str, sources: list[str]):
+    """BuildVRT that works with GDAL exceptions on (QGIS 4) and off (QGIS 3).
+
+    Returns (dataset or None, error message).
+    """
+    messages: list[str] = []
+
+    def handler(_err_class, _err_no, msg) -> None:
+        messages.append(msg)
+
+    gdal.PushErrorHandler(handler)
+    try:
+        vrt = gdal.BuildVRT(vrt_path, sources)
+    except RuntimeError as e:
+        vrt = None
+        messages.append(str(e))
+    finally:
+        gdal.PopErrorHandler()
+    return vrt, "; ".join(dict.fromkeys(m for m in messages if m)) or gdal.GetLastErrorMsg()
+
+
 class ClipTask(QgsTask):
     # Emitted in the main thread via QgsTask.finished → safe for UI work.
     completed = pyqtSignal(list, list, bool)  # paths, failure messages, cancelled
@@ -153,9 +174,20 @@ class ClipTask(QgsTask):
         last_refresh = time.monotonic()
         vrt = result = None
         try:
-            vrt = gdal.BuildVRT(vrt_path, ["/vsicurl/" + item.href for item, _b in members])
+            sources = ["/vsicurl/" + item.href for item, _b in members]
+            vrt, error = _build_vrt(vrt_path, sources)
             if vrt is None:
-                raise RuntimeError(gdal.GetLastErrorMsg() or "kunde inte öppna filerna")
+                # Older GDAL (QGIS 3.x) may ignore path-specific options for /vsicurl;
+                # retry once with the same options set globally.
+                for key, value in options.items():
+                    gdal.SetConfigOption(key, value)
+                try:
+                    vrt, error = _build_vrt(vrt_path, sources)
+                finally:
+                    for key in options:
+                        gdal.SetConfigOption(key, None)
+            if vrt is None:
+                raise RuntimeError(error or "kunde inte öppna filerna")
             predictor = 3 if gdal.GetDataTypeName(vrt.GetRasterBand(1).DataType).startswith("Float") else 2
 
             def progress(fraction, _message, _data) -> int:
