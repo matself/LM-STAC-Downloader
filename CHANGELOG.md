@@ -1,5 +1,6 @@
 # Changelog
 
+- **1.0.7**: Moved the toolbar icon and menu entry from the Web toolbar/menu to the Plugins toolbar/menu; added the geodata tag.
 - **1.0.6**: Clearer icon (bolder grid, smaller download arrow); shortened the changelog shown in the plugin manager, full history in CHANGELOG.md in the repository.
 - **1.0.5**: QGIS 4 compatibility: raised qgisMaximumVersion to 4.99 and declared Qt6 support (supportsQt6=True); still works in QGIS 3.44+.
 - **1.0.4**: Qt6 compatibility: use Qgis.GeometryType.Polygon directly instead of the removed QgsWkbTypes enum fallback.
