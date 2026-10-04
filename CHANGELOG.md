@@ -1,5 +1,6 @@
 # Changelog
 
+- **1.0.9**: Fix partial downloads (clips) failing in QGIS 3.44 with "kunde inte öppna filerna": retry with global GDAL options and report the real GDAL error.
 - **1.0.8**: Moved the toolbar icon and menu entry from the Web toolbar/menu to the Plugins toolbar/menu.
 - **1.0.7**: Code style fixes (flake8), removed obsolete supportsQt6 key.
 - **1.0.6**: Clearer icon (bolder grid, smaller download arrow); shortened the changelog shown in the plugin manager, full history in CHANGELOG.md in the repository.
