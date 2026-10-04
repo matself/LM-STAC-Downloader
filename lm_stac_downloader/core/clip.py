@@ -88,27 +88,6 @@ def union_bounds(all_bounds: list[Bounds]) -> Bounds:
     )
 
 
-def _build_vrt(vrt_path: str, sources: list[str]):
-    """BuildVRT that works with GDAL exceptions on (QGIS 4) and off (QGIS 3).
-
-    Returns (dataset or None, error message).
-    """
-    messages: list[str] = []
-
-    def handler(_err_class, _err_no, msg) -> None:
-        messages.append(msg)
-
-    gdal.PushErrorHandler(handler)
-    try:
-        vrt = gdal.BuildVRT(vrt_path, sources)
-    except RuntimeError as e:
-        vrt = None
-        messages.append(str(e))
-    finally:
-        gdal.PopErrorHandler()
-    return vrt, "; ".join(dict.fromkeys(m for m in messages if m)) or gdal.GetLastErrorMsg()
-
-
 class ClipTask(QgsTask):
     # Emitted in the main thread via QgsTask.finished → safe for UI work.
     completed = pyqtSignal(list, list, bool)  # paths, failure messages, cancelled
@@ -158,8 +137,7 @@ class ClipTask(QgsTask):
         final.parent.mkdir(parents=True, exist_ok=True)
         part = final.with_name(final.name + ".part")
         vrt_path = f"/vsimem/lm_stac_{id(self)}_{index}.vrt"
-        tiles = "ruta" if len(members) == 1 else "rutor"
-        label = f"{collection}{f' {spectral}' if spectral else ''} ({len(members)} {tiles})"
+        label = f"{collection}{f' {spectral}' if spectral else ''} ({len(members)} {'ruta' if len(members) == 1 else 'rutor'})"
         first_href = members[0][0].href
 
         prefix = "/vsicurl/https://" + urlparse(first_href).netloc + "/"
@@ -172,22 +150,11 @@ class ClipTask(QgsTask):
         for key, value in options.items():
             gdal.SetPathSpecificOption(prefix, key, value)
         last_refresh = time.monotonic()
-        vrt = result = None
+        vrt = source = result = None
         try:
-            sources = ["/vsicurl/" + item.href for item, _b in members]
-            vrt, error = _build_vrt(vrt_path, sources)
+            vrt = gdal.BuildVRT(vrt_path, ["/vsicurl/" + item.href for item, _b in members])
             if vrt is None:
-                # Older GDAL (QGIS 3.x) may ignore path-specific options for /vsicurl;
-                # retry once with the same options set globally.
-                for key, value in options.items():
-                    gdal.SetConfigOption(key, value)
-                try:
-                    vrt, error = _build_vrt(vrt_path, sources)
-                finally:
-                    for key in options:
-                        gdal.SetConfigOption(key, None)
-            if vrt is None:
-                raise RuntimeError(error or "kunde inte öppna filerna")
+                raise RuntimeError(gdal.GetLastErrorMsg() or "kunde inte öppna filerna")
             predictor = 3 if gdal.GetDataTypeName(vrt.GetRasterBand(1).DataType).startswith("Float") else 2
 
             def progress(fraction, _message, _data) -> int:
@@ -219,7 +186,7 @@ class ClipTask(QgsTask):
             os.replace(part, final)
             self.paths.append(str(final))
         finally:
-            result = vrt = None
+            result = vrt = source = None
             part.unlink(missing_ok=True)
             for key in options:
                 gdal.SetPathSpecificOption(prefix, key, None)
