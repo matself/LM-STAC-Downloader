@@ -1,5 +1,6 @@
 # Changelog
 
+- **Unreleased**: New service *Laserdata (punktmoln)*: search the `dsm-skoglig-copc` point clouds on the map, see points and size per tile, and download them clipped to the drawn area with PDAL (or as whole COPC files). Licence CC BY 4.0.
 - **1.0.7**: Moved the toolbar icon and menu entry from the Web toolbar/menu to the Plugins toolbar/menu; added the geodata tag.
 - **1.0.6**: Clearer icon (bolder grid, smaller download arrow); shortened the changelog shown in the plugin manager, full history in CHANGELOG.md in the repository.
 - **1.0.5**: QGIS 4 compatibility: raised qgisMaximumVersion to 4.99 and declared Qt6 support (supportsQt6=True); still works in QGIS 3.44+.

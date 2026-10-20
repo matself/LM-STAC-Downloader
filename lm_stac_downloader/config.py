@@ -1,4 +1,4 @@
-"""Endpoints and constants for Lantmäteriet's raster STAC services."""
+"""Endpoints and constants for Lantmäteriet's STAC services (rasters and point clouds)."""
 
 from __future__ import annotations
 
@@ -24,11 +24,23 @@ class Service:
     label: str
     path: str
     has_years: bool
+    # Restrict the search to this collection (needed for point clouds, which share
+    # /stac-hojd/v1 with the elevation rasters).
+    collection: str | None = None
+    point_cloud: bool = False
 
 
 SERVICES = {
     "ortofoto": Service("ortofoto", "Ortofoto", "/stac-bild/v1", True),
     "hojd": Service("hojd", "Höjddata (markhöjdmodell)", "/stac-hojd/v1", False),
+    "laser": Service(
+        "laser",
+        "Laserdata (punktmoln)",
+        "/stac-hojd/v1",
+        False,
+        collection="dsm-skoglig-copc",
+        point_cloud=True,
+    ),
 }
 DEFAULT_SERVICE = "ortofoto"
 

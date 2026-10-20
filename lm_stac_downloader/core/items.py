@@ -1,4 +1,4 @@
-"""Light-weight view of a STAC item with a downloadable raster asset."""
+"""Light-weight view of a STAC item with a downloadable raster or point cloud asset."""
 
 from __future__ import annotations
 
@@ -22,6 +22,8 @@ class StacItem:
     spectral: str | None = None  # e.g. "rgb" or "cir" for orthophotos
     model: str | None = None  # e.g. "markhöjdmodell" for elevation models
     changed: str | None = None  # date the data was last changed (elevation models)
+    point_cloud: bool = False  # COPC/LAZ instead of a raster
+    points: int | None = None  # number of points (`pc:count`), point clouds only
 
     @property
     def filename(self) -> str:
@@ -47,18 +49,29 @@ class StacItem:
     @property
     def kind(self) -> str:
         """What sets this item apart from its siblings: spectral type or tile size."""
-        return self.spectral or (self.tile_label if self.model else "")
+        return self.spectral or (self.tile_label if self.model or self.point_cloud else "")
 
 
-def parse_item(feature: dict[str, Any]) -> StacItem | None:
-    """Return None for items without a downloadable raster `data` asset.
+def is_point_cloud_type(media_type: str | None) -> bool:
+    """True for COPC/LAZ media types such as `application/vnd.laszip+copc`."""
+    media_type = (media_type or "").lower()
+    return "copc" in media_type or "laszip" in media_type
 
-    stac-hojd also serves point clouds (COPC/LAZ), which are not rasters.
+
+def parse_item(feature: dict[str, Any], point_cloud: bool = False) -> StacItem | None:
+    """Return None for items without a downloadable `data` asset of the wanted kind.
+
+    stac-hojd serves both elevation rasters and point clouds (COPC/LAZ). With
+    `point_cloud` False only rasters pass, with True only point clouds.
     """
     data = (feature.get("assets") or {}).get("data")
     if not data or not data.get("href"):
         return None
-    if "tiff" not in (data.get("type") or "").lower():
+    media_type = (data.get("type") or "").lower()
+    if point_cloud:
+        if not is_point_cloud_type(media_type):
+            return None
+    elif "tiff" not in media_type:
         return None
     props = feature.get("properties") or {}
     year = props.get("flygar")
@@ -79,11 +92,20 @@ def parse_item(feature: dict[str, Any]) -> StacItem | None:
         spectral=props.get("spektraltyp"),
         model=props.get("hojdmodelltyp"),
         changed=props.get("andringsdatum"),
+        point_cloud=point_cloud,
+        points=_int(props.get("pc:count", data.get("pc:count"))) if point_cloud else None,
     )
 
 
 def _year(value: Any) -> int | None:
     try:
         return int(str(value)[:4])
+    except (TypeError, ValueError):
+        return None
+
+
+def _int(value: Any) -> int | None:
+    try:
+        return int(value)
     except (TypeError, ValueError):
         return None
