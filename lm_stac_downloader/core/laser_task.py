@@ -52,7 +52,9 @@ class LaserClipTask(QgsTask):
 
     def run(self) -> bool:
         collection = self.jobs[0][0].collection
-        final = clip_path(self.output_dir, collection, union_bounds([b for _i, b in self.jobs]))
+        final = clip_path(
+            self.output_dir, collection, union_bounds([b for _i, b in self.jobs]), [i.id for i, _b in self.jobs]
+        )
         if final.exists():
             self.paths.append(str(final))
             return True

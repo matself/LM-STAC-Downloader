@@ -9,6 +9,7 @@ a file specification with `headers`.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import shutil
@@ -98,7 +99,14 @@ def union_bounds(all_bounds: list[Bounds]) -> Bounds:
     )
 
 
-def clip_path(output_dir: Path, collection: str, bounds: Bounds) -> Path:
-    name = f"{collection}_utsnitt_{round(bounds[0])}_{round(bounds[1])}_{round(bounds[2])}_{round(bounds[3])}.laz"
-    return output_dir / collection / name
+def clip_path(output_dir: Path, collection: str, bounds: Bounds, item_ids: Iterable[str]) -> Path:
+    """Where a clip is written.
+
+    The name holds the area and a short hash of the source tiles, so the same area clipped
+    from 10 km sheets and from 2.5 km tiles (or from another scan year) gets different files
+    instead of one silently reusing the other.
+    """
+    key = hashlib.sha1("|".join(sorted(item_ids)).encode("utf-8")).hexdigest()[:8]  # nosec B324 - not security
+    area = "_".join(str(round(b)) for b in bounds)
+    return output_dir / collection / f"{collection}_utsnitt_{area}_{key}.laz"
 

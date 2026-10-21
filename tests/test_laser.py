@@ -136,8 +136,19 @@ class BoundsTest(unittest.TestCase):
         self.assertEqual(union_bounds([(1, 2, 3, 4), (0, 3, 5, 6)]), (0, 2, 5, 6))
 
     def test_clip_path(self):
-        path = clip_path(Path("out"), "dsm-skoglig-copc", (453000.2, 6395800.4, 453100.0, 6395900.0))
-        self.assertEqual(path, Path("out/dsm-skoglig-copc/dsm-skoglig-copc_utsnitt_453000_6395800_453100_6395900.laz"))
+        path = clip_path(Path("out"), "dsm-skoglig-copc", (453000.2, 6395800.4, 453100.0, 6395900.0), ["a", "b"])
+        self.assertEqual(path.parent, Path("out/dsm-skoglig-copc"))
+        self.assertRegex(path.name, r"^dsm-skoglig-copc_utsnitt_453000_6395800_453100_6395900_[0-9a-f]{8}\.laz$")
+
+    def test_clip_path_depends_on_source_tiles(self):
+        area = (453000, 6395800, 453100, 6395900)
+        sheet = clip_path(Path("out"), "c", area, ["22b007-639_45"])
+        tiles = clip_path(Path("out"), "c", area, ["22b007-63950_4525_25", "22b007-63950_4500_25"])
+        self.assertNotEqual(sheet, tiles)
+
+    def test_clip_path_ignores_item_order(self):
+        area = (1, 2, 3, 4)
+        self.assertEqual(clip_path(Path("o"), "c", area, ["a", "b"]), clip_path(Path("o"), "c", area, ["b", "a"]))
 
 
 class FindPdalTest(unittest.TestCase):

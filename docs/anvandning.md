@@ -135,7 +135,7 @@ Datat är licensierat CC BY 4.0: ange Lantmäteriet som källa när du använder
   10 km-blad på cirka 1,5 GB. Antalet punkter i utsnittet blir mindre än i listan.
 * Filerna är COPC, ett format som går att läsa delvis. Med **Hämta bara det valda området (utsnitt)**, som är förvalt för laserdata,
   klipper pluginet ut området med `pdal`, som följer med QGIS. Bara de punkter som behövs hämtas, så ett litet område blir några MB.
-* Rutorna slås ihop till **en LAZ-fil**, `<målmapp>/dsm-skoglig-copc/dsm-skoglig-copc_utsnitt_<minx>_<miny>_<maxx>_<maxy>.laz`, i
+* Rutorna slås ihop till **en LAZ-fil**, `<målmapp>/dsm-skoglig-copc/dsm-skoglig-copc_utsnitt_<minx>_<miny>_<maxx>_<maxy>_<kod>.laz`, där koden skiljer olika källrutor åt (10 km-blad eller 2,5 km-rutor), i
   EPSG:5845 (SWEREF 99 TM och RH2000). Med **Lägg till i projektet** öppnas den som punktmolnslager.
 * Utsnittet är en rektangel. Hittar pluginet inte `pdal` får du hämta hela filer (avmarkera utsnitt).
 

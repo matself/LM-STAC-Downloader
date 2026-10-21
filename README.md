@@ -118,6 +118,7 @@ does not store any credentials itself; it uses QGIS' authentication manager.
 
 * Search is limited to 1000 hits.
 * The clip follows the area you searched on, not the map view at download time.
+* Laser data: the clip file name holds the area and a short code for the source tiles, so clips of the same area from different tiles (for example 10 km sheets and 2.5 km tiles) do not overwrite or reuse each other.
 * Laser data: only the collection `dsm-skoglig-copc` is searched, and it does not cover all of Sweden. The clip is
   a rectangle (no polygon clipping yet) and is written as one LAZ file per download, in the file's own CRS
   (EPSG:5845). Clipping needs `pdal` from the QGIS installation (tested with PDAL 2.10 in QGIS 4.2.3); without it
