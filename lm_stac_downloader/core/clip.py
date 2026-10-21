@@ -137,7 +137,8 @@ class ClipTask(QgsTask):
         final.parent.mkdir(parents=True, exist_ok=True)
         part = final.with_name(final.name + ".part")
         vrt_path = f"/vsimem/lm_stac_{id(self)}_{index}.vrt"
-        label = f"{collection}{f' {spectral}' if spectral else ''} ({len(members)} {'ruta' if len(members) == 1 else 'rutor'})"
+        noun = "ruta" if len(members) == 1 else "rutor"
+        label = f"{collection}{f' {spectral}' if spectral else ''} ({len(members)} {noun})"
         first_href = members[0][0].href
 
         prefix = "/vsicurl/https://" + urlparse(first_href).netloc + "/"
@@ -150,7 +151,7 @@ class ClipTask(QgsTask):
         for key, value in options.items():
             gdal.SetPathSpecificOption(prefix, key, value)
         last_refresh = time.monotonic()
-        vrt = source = result = None
+        vrt = result = None
         try:
             vrt = gdal.BuildVRT(vrt_path, ["/vsicurl/" + item.href for item, _b in members])
             if vrt is None:
@@ -186,7 +187,7 @@ class ClipTask(QgsTask):
             os.replace(part, final)
             self.paths.append(str(final))
         finally:
-            result = vrt = source = None
+            result = vrt = None
             part.unlink(missing_ok=True)
             for key in options:
                 gdal.SetPathSpecificOption(prefix, key, None)

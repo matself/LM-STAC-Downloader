@@ -109,4 +109,3 @@ def clip_path(output_dir: Path, collection: str, bounds: Bounds, item_ids: Itera
     key = hashlib.sha1("|".join(sorted(item_ids)).encode("utf-8")).hexdigest()[:8]  # nosec B324 - not security
     area = "_".join(str(round(b)) for b in bounds)
     return output_dir / collection / f"{collection}_utsnitt_{area}_{key}.laz"
-
