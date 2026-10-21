@@ -142,9 +142,9 @@ class BoundsTest(unittest.TestCase):
 
     def test_clip_path_depends_on_source_tiles(self):
         area = (453000, 6395800, 453100, 6395900)
-        sheet = clip_path(Path("out"), "c", area, ["22b007-639_45"])
+        ten_km = clip_path(Path("out"), "c", area, ["22b007-639_45"])
         tiles = clip_path(Path("out"), "c", area, ["22b007-63950_4525_25", "22b007-63950_4500_25"])
-        self.assertNotEqual(sheet, tiles)
+        self.assertNotEqual(ten_km, tiles)
 
     def test_clip_path_ignores_item_order(self):
         area = (1, 2, 3, 4)
@@ -165,6 +165,37 @@ class FindPdalTest(unittest.TestCase):
 
     def test_missing(self):
         self.assertIsNone(find_pdal([], which=lambda _n: None))
+
+
+def _item(item_id, proj_bbox, collection="dsm-skoglig-copc", point_cloud=True):
+    from lm_stac_downloader.core.items import StacItem
+
+    return StacItem(
+        id=item_id, collection=collection, year=2025, resolution=None, size=None, href="https://x/y.laz",
+        bbox=(), geometry=None, crs="EPSG:5845", proj_bbox=proj_bbox, point_cloud=point_cloud,
+    )
+
+
+class TileLabelTest(unittest.TestCase):
+    def test_laser_tile_2_5_km(self):
+        item = _item("25a002-61375_4400_25", (440000, 6137500, 442500, 6140000))
+        self.assertEqual(item.tile_label, "2,5 km-ruta")
+
+    def test_laser_tile_10_km_full(self):
+        item = _item("22b007-639_45", (450000, 6390000, 460000, 6400000))
+        self.assertEqual(item.tile_label, "10 km-ruta")
+
+    def test_laser_tile_10_km_cut_is_not_called_5_km(self):
+        item = _item("25a002-613_43", (435000, 6137500, 440000, 6140000))
+        self.assertEqual(item.tile_label, "10 km-ruta (beskuren)")
+
+    def test_dtm_cog_is_10_km(self):
+        item = _item("613_44", (440000, 6135000, 450000, 6140000), collection="dtm-cog", point_cloud=False)
+        self.assertEqual(item.tile_label, "10 km-ruta (beskuren)")
+
+    def test_mhm_is_2_5_km(self):
+        item = _item("x", (), collection="mhm-2.5", point_cloud=False)
+        self.assertEqual(item.tile_label, "2,5 km-ruta")
 
 
 if __name__ == "__main__":

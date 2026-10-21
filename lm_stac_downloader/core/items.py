@@ -2,8 +2,14 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Any
+
+# Laser data ids: `25a002-61375_4400_25` is a 2,5 km tile (northing, easting, size code),
+# `25a002-613_44` a 10 km tile (northing, easting).
+_TILE_25_ID = re.compile(r"^[^-]+-\d+_\d+_25$")
+_TILE_10_ID = re.compile(r"^[^-]+-\d+_\d+$")
 
 
 @dataclass(frozen=True)
@@ -31,20 +37,30 @@ class StacItem:
 
     @property
     def tile_label(self) -> str:
-        """Tile size, e.g. "2,5 km-ruta" or "10 km-blad". Empty if unknown.
+        """Tile size, e.g. "2,5 km-ruta" or "10 km-ruta". Empty if unknown.
 
-        The extent cannot be trusted for the 10 km sheets (`dtm-cog`): sheets at the
-        coast and the border are cut to the land that exists, so they can be 10 x 5,
-        7,5 x 10 or 2,5 x 5 km. The size follows the collection where it is known.
+        The extent cannot be trusted for the 10 km tiles (`dtm-cog` and the laser data):
+        tiles at the coast and the border are cut to the land that exists, so they can be
+        10 x 5, 7,5 x 10 or 2,5 x 5 km. The size follows the collection or the id where it
+        is known, and a tile smaller than 10 x 10 km is marked "(beskuren)" (cut).
         """
-        if self.collection == "dtm-cog":
-            return "10 km-blad"
         if self.collection.startswith("mhm-"):
+            return "2,5 km-ruta"
+        if self.collection == "dtm-cog" or (self.point_cloud and _TILE_10_ID.match(self.id)):
+            return "10 km-ruta" + self._cut_suffix()
+        if self.point_cloud and _TILE_25_ID.match(self.id):
             return "2,5 km-ruta"
         if len(self.proj_bbox) != 4:
             return ""
         km = (self.proj_bbox[2] - self.proj_bbox[0]) / 1000
-        return f"{km:g}".replace(".", ",") + (" km-blad" if km >= 10 else " km-ruta")
+        return f"{km:g}".replace(".", ",") + " km-ruta"
+
+    def _cut_suffix(self) -> str:
+        if len(self.proj_bbox) != 4:
+            return ""
+        width = self.proj_bbox[2] - self.proj_bbox[0]
+        height = self.proj_bbox[3] - self.proj_bbox[1]
+        return " (beskuren)" if width < 10000 or height < 10000 else ""
 
     @property
     def kind(self) -> str:

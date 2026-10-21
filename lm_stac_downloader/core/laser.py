@@ -103,7 +103,7 @@ def clip_path(output_dir: Path, collection: str, bounds: Bounds, item_ids: Itera
     """Where a clip is written.
 
     The name holds the area and a short hash of the source tiles, so the same area clipped
-    from 10 km sheets and from 2.5 km tiles (or from another scan year) gets different files
+    from 10 km tiles and from 2.5 km tiles (or from another scan year) gets different files
     instead of one silently reusing the other.
     """
     key = hashlib.sha1("|".join(sorted(item_ids)).encode("utf-8")).hexdigest()[:8]  # nosec B324 - not security
