@@ -129,7 +129,8 @@ does not store any credentials itself; it uses QGIS' authentication manager.
   whole tiles can still be downloaded. Some hits are 10 km tiles (about 1.5 GB; at the coast they are cut to the land and marked "beskuren", cut), so check the size column.
 * Elevation search returns both `mhm-*` (2.5 km tiles, roughly 8 MB) and `dtm-cog` (10 km tiles, roughly
   290 MB).
-* The plugin is tested against QGIS 3.44 (Qt5). QGIS 4 / Qt6 has not been tested.
+* The plugin is tested with QGIS 4.2.3 (Qt6, Windows), including laser data clipping (PDAL 2.10). QGIS 3.44 (Qt5) was tested
+  for orthophotos and elevation data in earlier versions; laser data clipping has not been tested there or on Linux/macOS.
 
 ## Development
 
