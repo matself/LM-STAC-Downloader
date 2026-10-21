@@ -10,6 +10,7 @@ from qgis.core import (
     QgsCoordinateReferenceSystem,
     QgsCoordinateTransform,
     QgsGeometry,
+    QgsPointCloudLayer,
     QgsPointXY,
     QgsProject,
     QgsRasterLayer,
@@ -60,10 +61,29 @@ from ..core.auth import authcfg_exists
 from ..core.clip import ClipTask, clip_bounds, covered_fraction
 from ..core.downloader import DownloadQueue
 from ..core.items import StacItem
+from ..core.laser import (
+    HORIZONTAL_CRS,
+    find_pdal,
+    tile_bounds,
+)
+from ..core.laser_task import LaserClipTask, qgis_pdal_dirs
 from ..core.task import SearchTask
 from .auth_dialog import CreateAuthDialog
 
 COL_NAME, COL_COLLECTION, COL_TYPE, COL_YEAR, COL_RES, COL_CHANGED, COL_SIZE = range(7)
+
+RASTER_HEADERS = ["Ruta", "Kollektion", "Typ", "År", "Upplösning", "Ändrad", "Storlek"]
+# Point clouds: the resolution column holds the number of points.
+POINT_CLOUD_HEADERS = ["Ruta", "Kollektion", "Typ", "Skannat", "Punkter", "Ändrad", "Storlek"]
+
+
+def _format_count(count: int | None) -> str:
+    """Number of points with thousands separated by a space, e.g. "27,7 milj."."""
+    if count is None:
+        return ""
+    if count >= 1_000_000:
+        return f"{count / 1_000_000:.1f}".replace(".", ",") + " milj."
+    return f"{count:,}".replace(",", " ")
 
 
 def _format_bytes(size: int | None) -> str:
@@ -97,7 +117,7 @@ class StacDock(QDockWidget):
         self.area: QgsRectangle | None = None  # WGS 84
         self._search_task: SearchTask | None = None
         self._queue: DownloadQueue | None = None
-        self._clip_task: ClipTask | None = None
+        self._clip_task: ClipTask | LaserClipTask | None = None
         self._geometries: dict[tuple[str, str], QgsGeometry] = {}
         self._previous_tool = None
 
@@ -225,7 +245,7 @@ class StacDock(QDockWidget):
         self.tree.setRootIsDecorated(False)
         self.tree.setSortingEnabled(True)
         self.tree.setMinimumHeight(200)
-        self.tree.setHeaderLabels(["Ruta", "Kollektion", "Typ", "År", "Upplösning", "Ändrad", "Storlek"])
+        self.tree.setHeaderLabels(RASTER_HEADERS)
         self.tree.itemChanged.connect(self._update_summary)
         layout.addWidget(self.tree)
 
@@ -257,11 +277,13 @@ class StacDock(QDockWidget):
         layout.addWidget(self.output_widget)
 
         self.clip_check = QCheckBox("Hämta bara det valda området (utsnitt)")
-        self.clip_check.setToolTip(
-            "Hämtar bara de delar av filerna som täcker området du valt, i stället för hela filen. "
-            "Fungerar eftersom filerna är Cloud Optimized GeoTIFF."
-        )
         layout.addWidget(self.clip_check)
+
+        self.license_label = QLabel(
+            "Laserdata: © Lantmäteriet, licens CC BY 4.0. Ange Lantmäteriet som källa när du använder datat."
+        )
+        self.license_label.setWordWrap(True)
+        layout.addWidget(self.license_label)
 
         self.add_to_project = QCheckBox("Lägg till i projektet när klart")
         self.add_to_project.setChecked(True)
@@ -295,7 +317,8 @@ class StacDock(QDockWidget):
         self.service_combo.setCurrentIndex(max(0, self.service_combo.findData(service)))
         self.year_from.setValue(int(self.settings.value(self._key("year_from"), 2020)))
         self.year_to.setValue(int(self.settings.value(self._key("year_to"), 2026)))
-        self.clip_check.setChecked(str(self.settings.value(self._key("clip"), "false")).lower() == "true")
+        self._clip_service = self.service_combo.currentData()
+        self.clip_check.setChecked(self._clip_setting(self._clip_service))
         self.output_widget.setFilePath(self.settings.value(self._key("output"), str(Path.home())))
 
     def _save_settings(self) -> None:
@@ -303,7 +326,7 @@ class StacDock(QDockWidget):
         self.settings.setValue(self._key("service"), self.service_combo.currentData())
         self.settings.setValue(self._key("year_from"), self.year_from.value())
         self.settings.setValue(self._key("year_to"), self.year_to.value())
-        self.settings.setValue(self._key("clip"), self.clip_check.isChecked())
+        self._store_clip_setting()
         self.settings.setValue(self._key("output"), self.output_widget.filePath())
 
     # --- helpers ---------------------------------------------------------
@@ -326,10 +349,42 @@ class StacDock(QDockWidget):
             self.auth_select.setConfigId(dlg.authcfg)
             self._save_settings()
 
+    def _clip_setting(self, service_key: str) -> bool:
+        """Whether clipping was on for this service; point clouds default to on (tiles are 157 MB)."""
+        default = "true" if SERVICES[service_key].point_cloud else "false"
+        name = "clip_laser" if SERVICES[service_key].point_cloud else "clip"
+        return str(self.settings.value(self._key(name), default)).lower() == "true"
+
+    def _store_clip_setting(self) -> None:
+        key = getattr(self, "_clip_service", None)
+        if key:
+            name = "clip_laser" if SERVICES[key].point_cloud else "clip"
+            self.settings.setValue(self._key(name), self.clip_check.isChecked())
+
     def _on_service_changed(self) -> None:
-        service = SERVICES[self.service_combo.currentData()]
+        key = self.service_combo.currentData()
+        service = SERVICES[key]
         self.year_widget.setVisible(service.has_years)
         self.year_label.setVisible(service.has_years)
+        self.license_label.setVisible(service.point_cloud)
+        self.tree.setHeaderLabels(POINT_CLOUD_HEADERS if service.point_cloud else RASTER_HEADERS)
+        if service.point_cloud:
+            self.clip_check.setToolTip(
+                "Hämtar bara de punkter som ligger inom området du valt, i stället för hela rutan "
+                "(cirka 157 MB). Fungerar eftersom filerna är COPC. Kräver PDAL, som följer med QGIS."
+            )
+        else:
+            self.clip_check.setToolTip(
+                "Hämtar bara de delar av filerna som täcker området du valt, i stället för hela filen. "
+                "Fungerar eftersom filerna är Cloud Optimized GeoTIFF."
+            )
+        # Each kind of service remembers its own clip choice.
+        previous = getattr(self, "_clip_service", None)
+        if previous and previous != key:
+            self._store_clip_setting()
+            self._clip_service = key
+            self.clip_check.setChecked(self._clip_setting(key))
+        self._clear_hits()
 
     # --- area ------------------------------------------------------------
 
@@ -369,10 +424,15 @@ class StacDock(QDockWidget):
 
     def _clear(self) -> None:
         """Remove the search area, the hits and their outlines from map and list."""
-        for band in (self._band, self._hits_band, self._selected_band):
-            band.reset(Qgis.GeometryType.Polygon)
+        self._band.reset(Qgis.GeometryType.Polygon)
         self.area = None
         self.area_label.setText("Inget område valt")
+        self._clear_hits()
+
+    def _clear_hits(self) -> None:
+        """Remove the hits and their outlines, keeping the search area."""
+        for band in (self._hits_band, self._selected_band):
+            band.reset(Qgis.GeometryType.Polygon)
         self.items = []
         self._geometries = {}
         self._rows = {}
@@ -391,6 +451,8 @@ class StacDock(QDockWidget):
         a = self.area
         body: dict = {"bbox": [a.xMinimum(), a.yMinimum(), a.xMaximum(), a.yMaximum()]}
         service = SERVICES[self.service_combo.currentData()]
+        if service.collection:
+            body["collections"] = [service.collection]
         if service.has_years:
             first, last = self.year_from.value(), self.year_to.value()
             if first > last:
@@ -408,7 +470,8 @@ class StacDock(QDockWidget):
             return
         self._save_settings()
 
-        task = SearchTask(search_base_url(self.service_combo.currentData()), authcfg, body)
+        key = self.service_combo.currentData()
+        task = SearchTask(search_base_url(key), authcfg, body, SERVICES[key].point_cloud)
         task.status.connect(self.search_status.setText)
         task.completed.connect(self._on_search_completed)
         task.failed.connect(self._on_search_failed)
@@ -449,7 +512,9 @@ class StacDock(QDockWidget):
                     item.collection,
                     item.kind,
                     str(item.year or ""),
-                    f"{item.resolution:g} m" if item.resolution else "",
+                    _format_count(item.points)
+                    if item.point_cloud
+                    else (f"{item.resolution:g} m" if item.resolution else ""),
                     item.changed or "",
                     _format_bytes(item.size),
                 ]
@@ -458,7 +523,7 @@ class StacDock(QDockWidget):
             row.setCheckState(COL_NAME, Qt.CheckState.Unchecked)
             row.setData(COL_NAME, Qt.ItemDataRole.UserRole + 1, item)
             row.setData(COL_YEAR, Qt.ItemDataRole.UserRole, item.year or 0)
-            row.setData(COL_RES, Qt.ItemDataRole.UserRole, item.resolution or 0)
+            row.setData(COL_RES, Qt.ItemDataRole.UserRole, (item.points if item.point_cloud else item.resolution) or 0)
             row.setData(COL_SIZE, Qt.ItemDataRole.UserRole, item.size or 0)
             self.tree.addTopLevelItem(row)
             self._rows[(item.collection, item.id)] = row
@@ -489,6 +554,9 @@ class StacDock(QDockWidget):
         known = sum(i.size for i in checked if i.size)
         unknown = sum(1 for i in checked if not i.size)
         text = f"{len(checked)} av {len(self.items)} valda, {_format_bytes(known)}"
+        points = sum(i.points for i in checked if i.points)
+        if points:
+            text += f", {_format_count(points)} punkter"
         if unknown:
             text += f" (+{unknown} med okänd storlek)"
         self.summary_label.setText(text)
@@ -585,6 +653,10 @@ class StacDock(QDockWidget):
             self._message("Välj en målmapp.", Qgis.MessageLevel.Warning)
             return
 
+        if items[0].point_cloud:
+            self._start_laser(items, authcfg, Path(output))
+            return
+
         jobs = None
         if self.clip_check.isChecked():
             jobs = self._clip_jobs(items)
@@ -621,6 +693,82 @@ class StacDock(QDockWidget):
         self._queue = queue
         self._begin_download_ui()
         queue.start()
+
+    def _start_laser(self, items: list[StacItem], authcfg: str, output: Path) -> None:
+        """Download point clouds: clipped to the area with pdal, or as whole files."""
+        pdal = find_pdal(qgis_pdal_dirs())
+        clip = self.clip_check.isChecked()
+        if clip and not pdal:
+            self._message(
+                "Hittade inte pdal, som behövs för utsnitt. Avmarkera utsnitt för att hämta hela rutor.",
+                Qgis.MessageLevel.Warning,
+            )
+            return
+        jobs = None
+        if clip:
+            jobs = self._laser_jobs(items)
+            if jobs is None:
+                return
+            total = sum(int(item.size * covered_fraction(item, bounds)) for item, bounds in jobs if item.size)
+            count = len(jobs)
+        else:
+            total, count = sum(i.size for i in items if i.size), len(items)
+
+        if total > WARN_BYTES:
+            answer = QMessageBox.question(
+                self,
+                PLUGIN_NAME,
+                f"Du är på väg att hämta {count} filer, ungefär {_format_bytes(total)}. Fortsätta?",
+            )
+            if answer != QMessageBox.StandardButton.Yes:
+                return
+        self._save_settings()
+
+        if jobs is not None:
+            task = LaserClipTask(jobs, authcfg, output, pdal)
+            task.progress_info.connect(self._on_laser_progress)
+            task.completed.connect(self._on_download_finished)
+            self._clip_task = task
+            self._begin_download_ui()
+            QgsApplication.taskManager().addTask(task)
+            return
+
+        queue = DownloadQueue(items, authcfg, output, self)
+        queue.progress.connect(self._on_download_progress)
+        queue.finished.connect(self._on_download_finished)
+        self._queue = queue
+        self._begin_download_ui()
+        queue.start()
+
+    def _laser_jobs(self, items: list[StacItem]) -> list | None:
+        """(item, bounds in SWEREF 99 TM) for the tiles the area touches; None if nothing to do."""
+        if self.area is None:
+            self._message("Välj ett område först för att hämta utsnitt.", Qgis.MessageLevel.Warning)
+            return None
+        transform = QgsCoordinateTransform(
+            QgsCoordinateReferenceSystem(SEARCH_CRS),
+            QgsCoordinateReferenceSystem(HORIZONTAL_CRS),
+            QgsProject.instance(),
+        )
+        rect = transform.transformBoundingBox(self.area)
+        area = (rect.xMinimum(), rect.yMinimum(), rect.xMaximum(), rect.yMaximum())
+        jobs, missed = [], 0
+        for item in items:
+            bounds = tile_bounds(item, area)
+            if bounds:
+                jobs.append((item, bounds))
+            else:
+                missed += 1
+        if missed:
+            self._message(
+                f"{missed} valda rutor ligger utanför området och hoppas över.",
+                Qgis.MessageLevel.Warning,
+            )
+        return jobs or None
+
+    def _on_laser_progress(self, index: int, count: int, name: str) -> None:
+        self.progress.setRange(0, 0)
+        self.progress_label.setText(f"Laserutsnitt {index} av {count}: {name}")
 
     def _clip_jobs(self, items: list[StacItem]) -> list | None:
         """(item, bounds) for the items the chosen area touches; None if nothing to do."""
@@ -689,11 +837,16 @@ class StacDock(QDockWidget):
 
         if self.add_to_project.isChecked():
             for path in paths:
-                layer = QgsRasterLayer(path, Path(path).stem)
+                if path.lower().endswith((".laz", ".las")):
+                    layer = QgsPointCloudLayer(path, Path(path).name.split(".")[0], "pdal")
+                    kind = "punktmoln"
+                else:
+                    layer = QgsRasterLayer(path, Path(path).stem)
+                    kind = "raster"
                 if layer.isValid():
                     QgsProject.instance().addMapLayer(layer)
                 else:
-                    failures.append(f"{Path(path).name}: kunde inte öppnas som raster")
+                    failures.append(f"{Path(path).name}: kunde inte öppnas som {kind}")
 
         if failures:
             self._message(

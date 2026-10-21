@@ -43,7 +43,7 @@ QGIS kan be om huvudlösenord första gången.
 
 ## 2. Sök
 
-1. Välj **tjänst**: *Ortofoto* eller *Höjddata (markhöjdmodell)*.
+1. Välj **tjänst**: *Ortofoto*, *Höjddata (markhöjdmodell)* eller *Laserdata (punktmoln)*.
 2. För ortofoto: välj **flygår** (från och till). Bilderna finns för många olika år, så begränsa till de år du vill ha.
 3. Välj **område**, antingen:
    * **Använd kartvyn**: området blir det som syns i kartan just nu.
@@ -114,9 +114,9 @@ Ett exempel: fyra ortofotorutor (2,6 GB) som möts i ett hörn gav ett utsnitt p
 
 Höjdsökningen kan ge träffar i två sorters kollektioner. I kolumnen *Typ* syns rutstorleken:
 
-* **`dtm-cog`, 10 km-blad**: blad om 10 × 10 km, cirka 290 MB. Det är Lantmäteriets nya format, med brytgeometrier i GeoPackage
-  för ytor där vatten har plattats till, och en infofil med metadata. Blad vid kusten och gränsen är avskurna till den del
-  som är land och kan därför vara mindre (till exempel 10 × 5 km eller bara några MB), men de räknas ändå som 10 km-blad.
+* **`dtm-cog`, 10 km-ruta**: rutor om 10 × 10 km, cirka 290 MB. Det är Lantmäteriets nya format, med brytgeometrier i GeoPackage
+  för ytor där vatten har plattats till, och en infofil med metadata. Rutor vid kusten och gränsen är avskurna till den del
+  som är land och kan därför vara mindre (till exempel 10 × 5 km eller bara några MB), men de räknas ändå som 10 km-rutor och markeras *(beskuren)* i listan.
 * **`mhm-*`, 2,5 km-ruta**: de äldre rutorna om 2,5 × 2,5 km, cirka 8–10 MB. Enligt Lantmäteriet slutade de uppdateras
   15 juni och avvecklas på sikt. Något slutdatum anges inte.
 
@@ -124,6 +124,20 @@ Båda är markhöjdmodeller med 1 m upplösning i Cloud Optimized GeoTIFF, och d
 samma område. Kolumnen *Ändrad* visar när datat senast ändrats, så du ser vilken som är nyast. Välj den du vill ha. Med
 utsnitt spelar filstorleken mindre roll. Se
 [Lantmäteriets nyhet](https://www.lantmateriet.se/sv/geodata/vara-produkter/Produktnyheter/Geografisk-information/markhojdmodell-nedladdning-utokas-med-mer-innehall/).
+
+### Laserdata (punktmoln)
+
+Tjänsten *Laserdata (punktmoln)* söker i kollektionen `dsm-skoglig-copc` (Laserdata Skog) hos Lantmäteriet. Den täcker inte hela landet.
+Datat är licensierat CC BY 4.0: ange Lantmäteriet som källa när du använder det. Behörigheten är samma som för höjddata
+(*Markhöjdmodell Nedladdning*).
+
+* I träfflistan visas antal **punkter** och **storlek** per ruta. Rutorna är oftast 2,5 × 2,5 km (cirka 150 MB), men en del träffar är
+  10 km-rutor på cirka 1,5 GB. Antalet punkter i utsnittet blir mindre än i listan.
+* Filerna är COPC, ett format som går att läsa delvis. Med **Hämta bara det valda området (utsnitt)**, som är förvalt för laserdata,
+  klipper pluginet ut området med `pdal`, som följer med QGIS. Bara de punkter som behövs hämtas, så ett litet område blir några MB.
+* Rutorna slås ihop till **en LAZ-fil**, `<målmapp>/dsm-skoglig-copc/dsm-skoglig-copc_utsnitt_<minx>_<miny>_<maxx>_<maxy>_<kod>.laz`, där koden skiljer olika källrutor åt (10 km-rutor eller 2,5 km-rutor), i
+  EPSG:5845 (SWEREF 99 TM och RH2000). Med **Lägg till i projektet** öppnas den som punktmolnslager.
+* Utsnittet är en rektangel. Hittar pluginet inte `pdal` får du hämta hela filer (avmarkera utsnitt).
 
 ## Felsökning
 
