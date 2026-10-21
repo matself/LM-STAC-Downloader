@@ -69,6 +69,10 @@ groups: *Anslutning* (connection), *Sökning* (search) and, once there are hits,
 | Sök | Search | Runs the STAC search for the selected area and service |
 | Rensa sökområde och träffar | Clear search area and hits | Removes the search box and the blue/orange result boxes from the map |
 | Träffar | Hits | Group listing the search results (name, collection, type, year, resolution, changed, size) |
+| Ruta, Kollektion, Typ, År, Upplösning, Ändrad, Storlek | Tile, Collection, Type, Year, Resolution, Changed, Size | Columns of the hit list. *Typ* is the image type for orthophotos (`rgb` colour, `cir` colour infrared, `pan` panchromatic) and the tile size for elevation and laser data |
+| 2,5 km-ruta | 2.5 km tile | Value in *Typ*: a tile of 2.5 x 2.5 km |
+| 10 km-ruta | 10 km tile | Value in *Typ*: a tile of 10 x 10 km |
+| 10 km-ruta (beskuren) | 10 km tile (cut) | Value in *Typ*: a 10 km tile that is smaller than 10 x 10 km because it is cut to the land that exists, for example at the coast |
 | Skannat | Scanned | Column replacing *År* (year) for laser data: the year of the scan |
 | Punkter | Points | Column replacing *Upplösning* (resolution) for laser data: number of points in the tile, e.g. "27,7 milj." (27.7 million). The summary under the list adds up the points of the selected tiles |
 | Välj rutor i kartan | Pick tiles on the map | Toggle: click a tile on the map to select or deselect it |
