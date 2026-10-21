@@ -75,20 +75,26 @@ class LaserClipTask(QgsTask):
                 except Exception as e:  # noqa: BLE001 — report any failure per tile
                     if self.isCanceled():
                         return False
-                    self.failures.append(f"{item.id}: {e}")
+                    self.failures.append(f"{item.id} (klipp av rutan): {e}")
             if not pieces:
                 return True
             part = final.with_name(final.stem + ".part.laz")
-            if len(pieces) == 1:
-                shutil.move(str(pieces[0]), part)
-            else:
-                self._run(merge_command(self.pdal, pieces, part))
-            os.replace(part, final)
+            try:
+                if len(pieces) == 1:
+                    shutil.move(str(pieces[0]), part)
+                else:
+                    self.progress_info.emit(len(self.jobs), len(self.jobs), "slår ihop")
+                    self._run(merge_command(self.pdal, pieces, part))
+                os.replace(part, final)
+            except Exception as e:  # noqa: BLE001
+                if not self.isCanceled():
+                    self.failures.append(f"sammanslagning av {len(pieces)} klipp: {e}")
+                return True
             self.paths.append(str(final))
             return True
         except Exception as e:  # noqa: BLE001
             if not self.isCanceled():
-                self.failures.append(str(e))
+                self.failures.append(f"laserutsnitt: {e}")
             return True
         finally:
             shutil.rmtree(work, ignore_errors=True)
