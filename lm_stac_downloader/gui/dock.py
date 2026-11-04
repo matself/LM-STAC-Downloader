@@ -10,6 +10,7 @@ from qgis.core import (
     QgsCoordinateReferenceSystem,
     QgsCoordinateTransform,
     QgsGeometry,
+    QgsMessageLog,
     QgsPointCloudLayer,
     QgsPointXY,
     QgsProject,
@@ -61,12 +62,6 @@ from ..core.auth import authcfg_exists
 from ..core.clip import ClipTask, clip_bounds, covered_fraction
 from ..core.downloader import DownloadQueue
 from ..core.items import StacItem
-from ..core.laser import (
-    HORIZONTAL_CRS,
-    find_pdal,
-    tile_bounds,
-)
-from ..core.laser_task import LaserClipTask, qgis_pdal_dirs
 from ..core.task import SearchTask
 from .auth_dialog import CreateAuthDialog
 
@@ -117,7 +112,8 @@ class StacDock(QDockWidget):
         self.area: QgsRectangle | None = None  # WGS 84
         self._search_task: SearchTask | None = None
         self._queue: DownloadQueue | None = None
-        self._clip_task: ClipTask | LaserClipTask | None = None
+        self._clip_task: ClipTask | None = None
+        self._point_cloud_run = False  # the running download is point clouds
         self._geometries: dict[tuple[str, str], QgsGeometry] = {}
         self._previous_tool = None
 
@@ -277,6 +273,10 @@ class StacDock(QDockWidget):
         layout.addWidget(self.output_widget)
 
         self.clip_check = QCheckBox("Hämta bara det valda området (utsnitt)")
+        self.clip_check.setToolTip(
+            "Hämtar bara de delar av filerna som täcker området du valt, i stället för hela filen. "
+            "Fungerar eftersom filerna är Cloud Optimized GeoTIFF."
+        )
         layout.addWidget(self.clip_check)
 
         self.license_label = QLabel(
@@ -317,8 +317,7 @@ class StacDock(QDockWidget):
         self.service_combo.setCurrentIndex(max(0, self.service_combo.findData(service)))
         self.year_from.setValue(int(self.settings.value(self._key("year_from"), 2020)))
         self.year_to.setValue(int(self.settings.value(self._key("year_to"), 2026)))
-        self._clip_service = self.service_combo.currentData()
-        self.clip_check.setChecked(self._clip_setting(self._clip_service))
+        self.clip_check.setChecked(str(self.settings.value(self._key("clip"), "false")).lower() == "true")
         self.output_widget.setFilePath(self.settings.value(self._key("output"), str(Path.home())))
 
     def _save_settings(self) -> None:
@@ -326,13 +325,14 @@ class StacDock(QDockWidget):
         self.settings.setValue(self._key("service"), self.service_combo.currentData())
         self.settings.setValue(self._key("year_from"), self.year_from.value())
         self.settings.setValue(self._key("year_to"), self.year_to.value())
-        self._store_clip_setting()
+        self.settings.setValue(self._key("clip"), self.clip_check.isChecked())
         self.settings.setValue(self._key("output"), self.output_widget.filePath())
 
     # --- helpers ---------------------------------------------------------
 
-    def _message(self, text: str, level=Qgis.MessageLevel.Info) -> None:
-        self.iface.messageBar().pushMessage(PLUGIN_NAME, text, level, 8)
+    def _message(self, text: str, level=Qgis.MessageLevel.Info, duration: int = 8) -> None:
+        """Show a message in the QGIS message bar; `duration` 0 keeps it until it is closed."""
+        self.iface.messageBar().pushMessage(PLUGIN_NAME, text, level, duration)
 
     def _authcfg_or_warn(self) -> str | None:
         authcfg = self.auth_select.configId()
@@ -349,41 +349,14 @@ class StacDock(QDockWidget):
             self.auth_select.setConfigId(dlg.authcfg)
             self._save_settings()
 
-    def _clip_setting(self, service_key: str) -> bool:
-        """Whether clipping was on for this service; point clouds default to on (tiles are 157 MB)."""
-        default = "true" if SERVICES[service_key].point_cloud else "false"
-        name = "clip_laser" if SERVICES[service_key].point_cloud else "clip"
-        return str(self.settings.value(self._key(name), default)).lower() == "true"
-
-    def _store_clip_setting(self) -> None:
-        key = getattr(self, "_clip_service", None)
-        if key:
-            name = "clip_laser" if SERVICES[key].point_cloud else "clip"
-            self.settings.setValue(self._key(name), self.clip_check.isChecked())
-
     def _on_service_changed(self) -> None:
-        key = self.service_combo.currentData()
-        service = SERVICES[key]
+        service = SERVICES[self.service_combo.currentData()]
         self.year_widget.setVisible(service.has_years)
         self.year_label.setVisible(service.has_years)
         self.license_label.setVisible(service.point_cloud)
+        # Point clouds are always downloaded as whole files.
+        self.clip_check.setVisible(not service.point_cloud)
         self.tree.setHeaderLabels(POINT_CLOUD_HEADERS if service.point_cloud else RASTER_HEADERS)
-        if service.point_cloud:
-            self.clip_check.setToolTip(
-                "Hämtar bara de punkter som ligger inom området du valt, i stället för hela rutan "
-                "(cirka 157 MB). Fungerar eftersom filerna är COPC. Kräver PDAL, som följer med QGIS."
-            )
-        else:
-            self.clip_check.setToolTip(
-                "Hämtar bara de delar av filerna som täcker området du valt, i stället för hela filen. "
-                "Fungerar eftersom filerna är Cloud Optimized GeoTIFF."
-            )
-        # Each kind of service remembers its own clip choice.
-        previous = getattr(self, "_clip_service", None)
-        if previous and previous != key:
-            self._store_clip_setting()
-            self._clip_service = key
-            self.clip_check.setChecked(self._clip_setting(key))
         self._clear_hits()
 
     # --- area ------------------------------------------------------------
@@ -653,12 +626,9 @@ class StacDock(QDockWidget):
             self._message("Välj en målmapp.", Qgis.MessageLevel.Warning)
             return
 
-        if items[0].point_cloud:
-            self._start_laser(items, authcfg, Path(output))
-            return
-
+        self._point_cloud_run = items[0].point_cloud
         jobs = None
-        if self.clip_check.isChecked():
+        if self.clip_check.isChecked() and not self._point_cloud_run:
             jobs = self._clip_jobs(items)
             if jobs is None:
                 return
@@ -693,82 +663,6 @@ class StacDock(QDockWidget):
         self._queue = queue
         self._begin_download_ui()
         queue.start()
-
-    def _start_laser(self, items: list[StacItem], authcfg: str, output: Path) -> None:
-        """Download point clouds: clipped to the area with pdal, or as whole files."""
-        pdal = find_pdal(qgis_pdal_dirs())
-        clip = self.clip_check.isChecked()
-        if clip and not pdal:
-            self._message(
-                "Hittade inte pdal, som behövs för utsnitt. Avmarkera utsnitt för att hämta hela rutor.",
-                Qgis.MessageLevel.Warning,
-            )
-            return
-        jobs = None
-        if clip:
-            jobs = self._laser_jobs(items)
-            if jobs is None:
-                return
-            total = sum(int(item.size * covered_fraction(item, bounds)) for item, bounds in jobs if item.size)
-            count = len(jobs)
-        else:
-            total, count = sum(i.size for i in items if i.size), len(items)
-
-        if total > WARN_BYTES:
-            answer = QMessageBox.question(
-                self,
-                PLUGIN_NAME,
-                f"Du är på väg att hämta {count} filer, ungefär {_format_bytes(total)}. Fortsätta?",
-            )
-            if answer != QMessageBox.StandardButton.Yes:
-                return
-        self._save_settings()
-
-        if jobs is not None:
-            task = LaserClipTask(jobs, authcfg, output, pdal)
-            task.progress_info.connect(self._on_laser_progress)
-            task.completed.connect(self._on_download_finished)
-            self._clip_task = task
-            self._begin_download_ui()
-            QgsApplication.taskManager().addTask(task)
-            return
-
-        queue = DownloadQueue(items, authcfg, output, self)
-        queue.progress.connect(self._on_download_progress)
-        queue.finished.connect(self._on_download_finished)
-        self._queue = queue
-        self._begin_download_ui()
-        queue.start()
-
-    def _laser_jobs(self, items: list[StacItem]) -> list | None:
-        """(item, bounds in SWEREF 99 TM) for the tiles the area touches; None if nothing to do."""
-        if self.area is None:
-            self._message("Välj ett område först för att hämta utsnitt.", Qgis.MessageLevel.Warning)
-            return None
-        transform = QgsCoordinateTransform(
-            QgsCoordinateReferenceSystem(SEARCH_CRS),
-            QgsCoordinateReferenceSystem(HORIZONTAL_CRS),
-            QgsProject.instance(),
-        )
-        rect = transform.transformBoundingBox(self.area)
-        area = (rect.xMinimum(), rect.yMinimum(), rect.xMaximum(), rect.yMaximum())
-        jobs, missed = [], 0
-        for item in items:
-            bounds = tile_bounds(item, area)
-            if bounds:
-                jobs.append((item, bounds))
-            else:
-                missed += 1
-        if missed:
-            self._message(
-                f"{missed} valda rutor ligger utanför området och hoppas över.",
-                Qgis.MessageLevel.Warning,
-            )
-        return jobs or None
-
-    def _on_laser_progress(self, index: int, count: int, name: str) -> None:
-        self.progress.setRange(0, 0)
-        self.progress_label.setText(f"Laserutsnitt {index} av {count}: {name}")
 
     def _clip_jobs(self, items: list[StacItem]) -> list | None:
         """(item, bounds) for the items the chosen area touches; None if nothing to do."""
@@ -830,6 +724,7 @@ class StacDock(QDockWidget):
         if queue:
             queue.deleteLater()
         self._clip_task = None
+        point_cloud_run, self._point_cloud_run = self._point_cloud_run, False
         self.download_btn.setVisible(True)
         self.cancel_btn.setVisible(False)
         self.progress.setVisible(False)
@@ -838,7 +733,9 @@ class StacDock(QDockWidget):
         if self.add_to_project.isChecked():
             for path in paths:
                 if path.lower().endswith((".laz", ".las")):
-                    layer = QgsPointCloudLayer(path, Path(path).name.split(".")[0], "pdal")
+                    # COPC files are read natively; plain LAZ/LAS goes through PDAL.
+                    provider = "copc" if path.lower().endswith(".copc.laz") else "pdal"
+                    layer = QgsPointCloudLayer(path, Path(path).name.split(".")[0], provider)
                     kind = "punktmoln"
                 else:
                     layer = QgsRasterLayer(path, Path(path).stem)
@@ -848,15 +745,22 @@ class StacDock(QDockWidget):
                 else:
                     failures.append(f"{Path(path).name}: kunde inte öppnas som {kind}")
 
+        # A point cloud download can take a long time, so its result stays until it is closed.
+        duration = 0 if point_cloud_run else 8
         if failures:
-            self._message(
-                f"{len(paths)} filer hämtade, {len(failures)} misslyckades: " + "; ".join(failures[:3]),
-                Qgis.MessageLevel.Warning,
-            )
+            text = f"{len(paths)} filer hämtade, {len(failures)} misslyckades: " + "; ".join(failures[:3])
+            level = Qgis.MessageLevel.Warning
         elif cancelled:
-            self._message(f"Avbrutet. {len(paths)} filer hann hämtas.", Qgis.MessageLevel.Warning)
+            text = f"Avbrutet. {len(paths)} filer hann hämtas."
+            level = Qgis.MessageLevel.Warning
         else:
-            self._message(f"{len(paths)} filer hämtade.", Qgis.MessageLevel.Success)
+            text = f"{len(paths)} filer hämtade."
+            level = Qgis.MessageLevel.Success
+        if point_cloud_run:
+            QgsMessageLog.logMessage(
+                f"{text} Alla fel: " + "; ".join(failures) if failures else text, PLUGIN_NAME, level
+            )
+        self._message(text, level, duration)
 
 
 def _item_geometry(item: StacItem) -> QgsGeometry:
