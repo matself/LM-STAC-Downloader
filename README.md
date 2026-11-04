@@ -12,8 +12,8 @@ cadastral and land registration authority) STAC services, with map-based search.
 
 Draw a box on the map, see which orthophoto, elevation or laser data tiles cover it, select the ones you want and
 download them. The tiles are large (an orthophoto tile is roughly 640 MB), so the plugin can also download
-**only the clip you selected** and mosaic it into a single file. For laser data the clip is cut out of
-the remote point cloud files with PDAL (which ships with QGIS), so a small area is a few MB instead of a 157 MB tile.
+**only the clip you selected** and mosaic it into a single file (orthophotos and elevation data). Laser data
+(point clouds) is always downloaded as whole files, one file per tile.
 
 Covers Sweden only: it queries Lantmäteriet's Swedish STAC services and requires access keys for a system
 account ordered through Lantmäteriet's Geotorget (see [Permissions](#permissions)).
@@ -79,7 +79,7 @@ groups: *Anslutning* (connection), *Sökning* (search) and, once there are hits,
 | Markera alla | Select all | Selects every hit |
 | Avmarkera alla | Deselect all | Deselects every hit |
 | Hämta | Download | Group with the download controls |
-| Hämta bara det valda området (utsnitt) | Download only the selected area (clip) | If checked, only the drawn area is downloaded and mosaicked instead of the full tiles. For laser data this uses PDAL and is on by default |
+| Hämta bara det valda området (utsnitt) | Download only the selected area (clip) | If checked, only the drawn area is downloaded and mosaicked instead of the full tiles. Not shown for laser data, which is always downloaded as whole files |
 | Laserdata: © Lantmäteriet, licens CC BY 4.0. Ange Lantmäteriet som källa när du använder datat. | Laser data: © Lantmäteriet, licence CC BY 4.0. Credit Lantmäteriet as the source when you use the data. | Attribution notice shown in the *Hämta* group for laser data |
 | Lägg till i projektet när klart | Add to project when done | Adds the downloaded raster(s) or point cloud(s) to the QGIS project once finished |
 | Hämta valda | Download selected | Starts downloading the selected hits |
@@ -105,9 +105,8 @@ by the plugin.
 | Inget område valt | No area selected | No search area has been set yet |
 | Ange både Consumer Key och Consumer Secret. | Enter both Consumer Key and Consumer Secret. | One of the two login fields is empty |
 | Utsnitt {n} av {N}: {namn} ({procent} %) | Clip {n} of {N}: {name} ({percent}%) | Progress while clipping/downloading |
-| Laserutsnitt {n} av {N}: {namn} | Laser clip {n} of {N}: {name} | Progress while clipping point clouds |
 | Avbryter… | Cancelling… | Shown while a download is being cancelled |
-| Hittade inte pdal, som behövs för utsnitt. Avmarkera utsnitt för att hämta hela rutor. | Could not find pdal, which clipping needs. Uncheck clipping to download whole tiles. | PDAL was not found in the QGIS installation or on PATH |
+| {n} filer hämtade. / {n} filer hämtade, {m} misslyckades: … / Avbrutet. {n} filer hann hämtas. | {n} files downloaded. / {n} files downloaded, {m} failed: … / Cancelled. {n} files were downloaded. | When a download ends. For laser data the message stays in the message bar until it is closed, and the full list of errors is written to the QGIS log |
 | {n} valda rutor ligger utanför området och hoppas över. | {n} selected tiles are outside the area and are skipped. | Some selected tiles do not overlap the searched area |
 | åtkomst nekad. Sökningen fungerade, men den valda autentiseringen får inte hämta filer. … | Access denied. The search worked, but the selected credentials are not allowed to download files. Check that the keys belong to a system account that has ordered *Ortofoto Nedladdning* or *Markhöjdmodell Nedladdning* (production) on Geotorget, and that the application subscribes to STAC-bild and/or STAC-hojd. | The download host returns HTTP 403 (Forbidden) |
 
@@ -122,15 +121,14 @@ does not store any credentials itself; it uses QGIS' authentication manager.
 
 * Search is limited to 1000 hits.
 * The clip follows the area you searched on, not the map view at download time.
-* Laser data: the clip file name holds the area and a short code for the source tiles, so clips of the same area from different tiles (for example 10 km tiles and 2.5 km tiles) do not overwrite or reuse each other.
-* Laser data: only the collection `dsm-skoglig-copc` is searched, and it does not cover all of Sweden. The clip is
-  a rectangle (no polygon clipping yet) and is written as one LAZ file per download, in the file's own CRS
-  (EPSG:5845). Clipping needs `pdal` from the QGIS installation (tested with PDAL 2.10 in QGIS 4.2.3); without it
-  whole tiles can still be downloaded. Some hits are 10 km tiles (about 1.5 GB; at the coast they are cut to the land and marked "beskuren", cut), so check the size column.
+* Laser data: only the collection `dsm-skoglig-copc` is searched, and it does not cover all of Sweden. The files are
+  COPC point clouds (about 100 to 160 MB per 2.5 km tile) in the file's own CRS (EPSG:5845), downloaded as whole files.
+  There is no clipping for point clouds; cut out an area with your own tools (for example PDAL or QGIS processing).
+  Lantmäteriet has said that the older 10 km tiles are being withdrawn (planned 2 November 2026) in favour of the 2.5 km tiles.
 * Elevation search returns both `mhm-*` (2.5 km tiles, roughly 8 MB) and `dtm-cog` (10 km tiles, roughly
   290 MB).
-* The plugin is tested with QGIS 4.2.3 (Qt6, Windows), including laser data clipping (PDAL 2.10). QGIS 3.44 (Qt5) was tested
-  for orthophotos and elevation data in earlier versions; laser data clipping has not been tested there or on Linux/macOS.
+* The plugin is tested with QGIS 4.2.3 (Qt6, Windows). QGIS 3.44 (Qt5) was tested for orthophotos and elevation data in
+  earlier versions; laser data has not been tested there or on Linux/macOS.
 
 ## Development
 

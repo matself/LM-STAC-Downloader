@@ -131,13 +131,14 @@ Tjänsten *Laserdata (punktmoln)* söker i kollektionen `dsm-skoglig-copc` (Lase
 Datat är licensierat CC BY 4.0: ange Lantmäteriet som källa när du använder det. Behörigheten är samma som för höjddata
 (*Markhöjdmodell Nedladdning*).
 
-* I träfflistan visas antal **punkter** och **storlek** per ruta. Rutorna är oftast 2,5 × 2,5 km (cirka 150 MB), men en del träffar är
-  10 km-rutor på cirka 1,5 GB. Antalet punkter i utsnittet blir mindre än i listan.
-* Filerna är COPC, ett format som går att läsa delvis. Med **Hämta bara det valda området (utsnitt)**, som är förvalt för laserdata,
-  klipper pluginet ut området med `pdal`, som följer med QGIS. Bara de punkter som behövs hämtas, så ett litet område blir några MB.
-* Rutorna slås ihop till **en LAZ-fil**, `<målmapp>/dsm-skoglig-copc/dsm-skoglig-copc_utsnitt_<minx>_<miny>_<maxx>_<maxy>_<kod>.laz`, där koden skiljer olika källrutor åt (10 km-rutor eller 2,5 km-rutor), i
-  EPSG:5845 (SWEREF 99 TM och RH2000). Med **Lägg till i projektet** öppnas den som punktmolnslager.
-* Utsnittet är en rektangel. Hittar pluginet inte `pdal` får du hämta hela filer (avmarkera utsnitt).
+* I träfflistan visas antal **punkter** och **storlek** per ruta. Rutorna är oftast 2,5 × 2,5 km (cirka 100 till 160 MB).
+* Laserdata hämtas alltid som **hela filer**, en fil per ruta, sparade som `<målmapp>/dsm-skoglig-copc/<fil>.copc.laz`. Det finns
+  inget utsnitt för punktmoln. Vill du klippa ut ett område gör du det själv, till exempel med PDAL eller med QGIS bearbetning.
+  Koordinatsystemet är EPSG:5845 (SWEREF 99 TM och RH2000).
+* Med **Lägg till i projektet** öppnas varje fil som punktmolnslager. Filerna är COPC och läses direkt av QGIS.
+* När hämtningen är klar visas resultatet i QGIS meddelandefält och **står kvar tills du stänger det**. Alla fel skrivs också i QGIS
+  loggpanel, under fliken *Geodata: Ortofoto & höjd (Lantmäteriet)*.
+* Lantmäteriet har meddelat att de äldre 10 km-rutorna tas bort (planerat 2 november 2026) och ersätts av 2,5 km-rutorna.
 
 ## Felsökning
 
