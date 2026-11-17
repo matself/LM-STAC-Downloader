@@ -128,6 +128,23 @@ class ClipTask(QgsTask):
             raise RuntimeError("kunde inte hämta inloggning från QGIS autentiseringshanterare")
         return header
 
+    @staticmethod
+    def _open_error(sources: list[str]) -> str:
+        """Why the files could not be mosaicked: the first one that will not open, with GDAL's reason."""
+        for source in sources:
+            gdal.ErrorReset()
+            try:
+                dataset = gdal.Open(source)
+            except RuntimeError as e:
+                hint = ""
+                if "response code: 40" in str(e):
+                    hint = " – nekad åtkomst: kontrollera att ditt Geotorget-konto har behörighet till produkten"
+                return f"{source.rsplit('/', 1)[-1]}: {e}{hint}"
+            if dataset is None:
+                reason = gdal.GetLastErrorMsg() or "okänt fel"
+                return f"{source.rsplit('/', 1)[-1]}: {reason}"
+        return gdal.GetLastErrorMsg() or "filerna öppnas var för sig men kan inte sättas ihop (format eller koordinatsystem?)"
+
     def _clip_group(self, index: int, count: int, collection: str, spectral: str | None, members: list) -> None:
         bounds = union_bounds([b for _item, b in members])
         final = mosaic_path(self.output_dir, collection, spectral, bounds)
@@ -153,9 +170,11 @@ class ClipTask(QgsTask):
         last_refresh = time.monotonic()
         vrt = result = None
         try:
-            vrt = gdal.BuildVRT(vrt_path, ["/vsicurl/" + item.href for item, _b in members])
+            sources = ["/vsicurl/" + item.href for item, _b in members]
+            vrt = gdal.BuildVRT(vrt_path, sources)
             if vrt is None:
-                raise RuntimeError(gdal.GetLastErrorMsg() or "kunde inte öppna filerna")
+                # BuildVRT gives no reason of its own; open the files one by one to find it.
+                raise RuntimeError(self._open_error(sources))
             predictor = 3 if gdal.GetDataTypeName(vrt.GetRasterBand(1).DataType).startswith("Float") else 2
 
             def progress(fraction, _message, _data) -> int:

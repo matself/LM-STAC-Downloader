@@ -32,7 +32,9 @@ class Service:
 
 SERVICES = {
     "ortofoto": Service("ortofoto", "Ortofoto", "/stac-bild/v1", True),
-    "hojd": Service("hojd", "Höjddata (markhöjdmodell)", "/stac-hojd/v1", False),
+    # Only the open ground model: the surface model (dsm-cog) is a paid product that
+    # the API lists for everyone but the download server refuses (HTTP 403).
+    "hojd": Service("hojd", "Höjddata (markhöjdmodell)", "/stac-hojd/v1", False, collection="dtm-cog"),
     "laser": Service(
         "laser",
         "Laserdata (punktmoln)",

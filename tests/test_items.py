@@ -81,9 +81,10 @@ class ServiceTest(unittest.TestCase):
         self.assertEqual(service.collection, "dsm-skoglig-copc")
         self.assertEqual(search_base_url("laser"), "https://api.lantmateriet.se/stac-hojd/v1")
 
-    def test_raster_services_have_no_collection(self):
-        self.assertIsNone(SERVICES["hojd"].collection)
+    def test_hojd_service_excludes_paid_surface_model(self):
+        self.assertEqual(SERVICES["hojd"].collection, "dtm-cog")
         self.assertFalse(SERVICES["hojd"].point_cloud)
+        self.assertIsNone(SERVICES["ortofoto"].collection)
 
 
 def _item(item_id, proj_bbox, collection="dsm-skoglig-copc", point_cloud=True):
