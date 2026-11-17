@@ -1,5 +1,6 @@
 # Changelog
 
+- **1.1.2**: Elevation search now only covers `dtm-cog` (the ground model). Lantmäteriet's catalogue also lists `dsm-cog` (the paid surface model from aerial images), which cannot be downloaded without an agreement (HTTP 403) and is no longer shown. A refused download now reports the real reason instead of "kunde inte öppna filerna".
 - **1.1.1**: Laser data (point clouds) is now always downloaded as whole files: the clip option and the PDAL dependency are removed for point clouds. Orthophoto and elevation clipping is unchanged. The result message after a laser data download now stays in the message bar until it is closed, and all errors are written to the QGIS log. COPC files are opened with QGIS' native COPC provider.
 - **1.1.0**: New service *Laserdata (punktmoln)*: search the `dsm-skoglig-copc` point clouds on the map, see points and size per tile, and download them clipped to the drawn area with PDAL (or as whole COPC files). Licence CC BY 4.0. Tiles are now called "ruta" everywhere (2,5 km-ruta, 10 km-ruta), and 10 km tiles cut at the coast are marked "(beskuren)" instead of being shown as "5 km-ruta" or "10 km-blad".
 - **1.0.7**: Moved the toolbar icon and menu entry from the Web toolbar/menu to the Plugins toolbar/menu; added the geodata tag.
