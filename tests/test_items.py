@@ -44,7 +44,41 @@ RASTER_FEATURE = {
 }
 
 
+ORTHO_FEATURE = {
+    "id": "o08e5h_c62",
+    "collection": "orto-historiska-1960-1969",
+    "bbox": [14.69, 58.39, 14.78, 58.44],
+    "properties": {"flygar": 1962, "upplosning": 0.5, "spektraltyp": "pan"},
+    "assets": {
+        "data": {
+            "href": "https://dl1.example/bild/data/o08e5h_c62.tif",
+            "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+            "file:size": 91081879,
+        },
+        "metadata": {
+            "href": "https://dl1.example/bild/pub/o08e5h_c62_flygbild.json",
+            "type": "application/geo+json",
+        },
+        "thumbnail": {"href": "https://dl1.example/bild/pub/o08e5h_c62_thumbnail.jpg", "type": "image/jpeg"},
+    },
+}
+
+
 class ParseItemTest(unittest.TestCase):
+    def test_orthophoto_metadata_asset(self):
+        item = parse_item(ORTHO_FEATURE)
+        self.assertEqual(item.metadata_href, "https://dl1.example/bild/pub/o08e5h_c62_flygbild.json")
+        self.assertEqual(item.metadata_filename, "o08e5h_c62_flygbild.json")
+
+    def test_no_metadata_asset(self):
+        self.assertIsNone(parse_item(RASTER_FEATURE).metadata_href)
+        self.assertEqual(parse_item(RASTER_FEATURE).metadata_filename, "")
+
+    def test_metadata_asset_must_be_json(self):
+        feature = json.loads(json.dumps(ORTHO_FEATURE))
+        feature["assets"]["metadata"]["type"] = "text/html"
+        self.assertIsNone(parse_item(feature).metadata_href)
+
     def test_point_cloud(self):
         item = parse_item(COPC_FEATURE, point_cloud=True)
         self.assertIsNotNone(item)

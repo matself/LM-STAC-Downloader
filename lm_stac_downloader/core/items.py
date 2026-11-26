@@ -30,10 +30,16 @@ class StacItem:
     changed: str | None = None  # date the data was last changed (elevation models)
     point_cloud: bool = False  # COPC/LAZ instead of a raster
     points: int | None = None  # number of points (`pc:count`), point clouds only
+    # GeoJSON with the seamlines of the aerial photos in an orthophoto (`metadata` asset).
+    metadata_href: str | None = None
 
     @property
     def filename(self) -> str:
         return self.href.rstrip("/").rsplit("/", 1)[-1]
+
+    @property
+    def metadata_filename(self) -> str:
+        return (self.metadata_href or "").rstrip("/").rsplit("/", 1)[-1]
 
     @property
     def tile_label(self) -> str:
@@ -80,8 +86,8 @@ def parse_item(feature: dict[str, Any], point_cloud: bool = False) -> StacItem |
     stac-hojd serves both elevation rasters and point clouds (COPC/LAZ). With
     `point_cloud` False only rasters pass, with True only point clouds.
     """
-    _debug_log_assets(feature)  # TEMPORARY (branch seamlines): remove before merging
-    data = (feature.get("assets") or {}).get("data")
+    assets = feature.get("assets") or {}
+    data = assets.get("data")
     if not data or not data.get("href"):
         return None
     media_type = (data.get("type") or "").lower()
@@ -111,35 +117,17 @@ def parse_item(feature: dict[str, Any], point_cloud: bool = False) -> StacItem |
         changed=props.get("andringsdatum"),
         point_cloud=point_cloud,
         points=_int(props.get("pc:count", data.get("pc:count"))) if point_cloud else None,
+        metadata_href=_metadata_href(assets.get("metadata")),
     )
 
 
-_LOGGED_COLLECTIONS: set[str] = set()
-
-
-def _debug_log_assets(feature: dict[str, Any]) -> None:
-    """TEMPORARY: log the asset keys and link rels once per collection, to find out
-    whether items carry seamlines/metadata. Remove before merging."""
-    collection = feature.get("collection", "")
-    if collection in _LOGGED_COLLECTIONS:
-        return
-    _LOGGED_COLLECTIONS.add(collection)
-    try:
-        from qgis.core import Qgis, QgsMessageLog
-
-        assets = feature.get("assets") or {}
-        details = {key: (asset or {}).get("type") for key, asset in assets.items()}
-        rels = [link.get("rel") for link in feature.get("links") or []]
-        import json
-
-        QgsMessageLog.logMessage(
-            f"[seamlines-debug] {collection} / {feature.get('id')}: assets={details} links={rels}\n"
-            f"[seamlines-debug] full item: {json.dumps(feature, ensure_ascii=False)}",
-            "Geodata: Ortofoto & höjd (Lantmäteriet)",
-            Qgis.MessageLevel.Info,
-        )
-    except Exception:  # noqa: BLE001 - debug only
-        pass
+def _metadata_href(asset: dict[str, Any] | None) -> str | None:
+    """The `metadata` asset, if it is a JSON file."""
+    if not asset or not asset.get("href"):
+        return None
+    if "json" not in (asset.get("type") or "").lower():
+        return None
+    return asset["href"]
 
 
 def _year(value: Any) -> int | None:

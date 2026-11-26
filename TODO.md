@@ -2,6 +2,8 @@
 
 ## Ladda ner metadatafilen för kartblad (ortofoto)
 
+**Status:** kryssruta byggd på grenen `seamlines` (ej mergad, ej släppt). Kvar: README/docs/CHANGELOG, version, test av dialogen i QGIS.
+
 Önskemål från en användare: möjlighet att välja att även ladda ner kartbladens
 metadatafil, t.ex. `.json` med sömlinjer (seamlines).
 
@@ -10,11 +12,13 @@ metadatafil, t.ex. `.json` med sömlinjer (seamlines).
   kollektioner som `orto-historiska-1960-1969`, `orto-historiska-1970-1979` och
   `orto-historiska-2000-2004` (bildtyp `pan`, 0,5–1 m, 14–88 MB per ruta), bredvid
   vanliga `orto-a-2006`.
-- **Sömlinjer finns inte för historiska ortofoton.** Enligt produktdokumentationen
-  för Ortofoto Nedladdning (Informationsinnehåll, version 2025.02) finns för
-  1949–2005 "endast begränsade metadata och inga bildsömlinjer". Sömlinjer
-  (polygoner) finns bara från 2006 och framåt, och inte för 2006–2009. Önskemålet
-  går alltså inte att uppfylla för historiska ortofoton. Kvar att verifiera: finns
+- **Sömlinjer finns även för historiska ortofoton** (bekräftat i praktiken för
+  `orto-historiska-1960-1969`), trots att produktdokumentationen (Informationsinnehåll,
+  version 2025.02) säger att de saknas för 1949–2005 och för 2006–2009. Filen
+  `<ruta>_flygbild.json` ligger på publik sökväg `/bild/pub/` (ingen inloggning) och är
+  en GeoJSON `FeatureCollection` i EPSG:3006 med `bildidentitet` och `tidpunkt` per
+  flygbild. Alla rutor har inte nödvändigtvis filen; pluginet hoppar över dem som saknar
+  `metadata`-asset. Kvar att verifiera: finns
   det en separat metadata-asset i STAC-items för 2006+ (felsökningsloggen på
   grenen `seamlines` visar assets-nycklar). **Bekräftat för 2019** (`orto-l2-2019`):
   assets är `data` (COG), `metadata` (`application/geo+json`) och `thumbnail`

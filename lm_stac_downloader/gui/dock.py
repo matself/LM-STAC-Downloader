@@ -62,6 +62,7 @@ from ..core.auth import authcfg_exists
 from ..core.clip import ClipTask, clip_bounds, covered_fraction
 from ..core.downloader import DownloadQueue
 from ..core.items import StacItem
+from ..core.metadata import MetadataTask
 from ..core.task import SearchTask
 from .auth_dialog import CreateAuthDialog
 
@@ -114,6 +115,8 @@ class StacDock(QDockWidget):
         self._queue: DownloadQueue | None = None
         self._clip_task: ClipTask | None = None
         self._point_cloud_run = False  # the running download is point clouds
+        self._metadata_job: tuple[list[StacItem], Path] | None = None  # seamline files to fetch after the images
+        self._metadata_task: MetadataTask | None = None
         self._geometries: dict[tuple[str, str], QgsGeometry] = {}
         self._previous_tool = None
 
@@ -279,6 +282,13 @@ class StacDock(QDockWidget):
         )
         layout.addWidget(self.clip_check)
 
+        self.metadata_check = QCheckBox("Hämta även metadatafil med sömlinjer (.json)")
+        self.metadata_check.setToolTip(
+            "Sparar en GeoJSON-fil per ruta bredvid bilden, med en polygon för varje flygbild i "
+            "ortofotot, bildens id och exakt tidpunkt. Finns inte för alla år."
+        )
+        layout.addWidget(self.metadata_check)
+
         self.license_label = QLabel(
             "Laserdata: © Lantmäteriet, licens CC BY 4.0. Ange Lantmäteriet som källa när du använder datat."
         )
@@ -318,6 +328,7 @@ class StacDock(QDockWidget):
         self.year_from.setValue(int(self.settings.value(self._key("year_from"), 2020)))
         self.year_to.setValue(int(self.settings.value(self._key("year_to"), 2026)))
         self.clip_check.setChecked(str(self.settings.value(self._key("clip"), "false")).lower() == "true")
+        self.metadata_check.setChecked(str(self.settings.value(self._key("metadata"), "false")).lower() == "true")
         self.output_widget.setFilePath(self.settings.value(self._key("output"), str(Path.home())))
 
     def _save_settings(self) -> None:
@@ -326,6 +337,7 @@ class StacDock(QDockWidget):
         self.settings.setValue(self._key("year_from"), self.year_from.value())
         self.settings.setValue(self._key("year_to"), self.year_to.value())
         self.settings.setValue(self._key("clip"), self.clip_check.isChecked())
+        self.settings.setValue(self._key("metadata"), self.metadata_check.isChecked())
         self.settings.setValue(self._key("output"), self.output_widget.filePath())
 
     # --- helpers ---------------------------------------------------------
@@ -356,6 +368,8 @@ class StacDock(QDockWidget):
         self.license_label.setVisible(service.point_cloud)
         # Point clouds are always downloaded as whole files.
         self.clip_check.setVisible(not service.point_cloud)
+        # Only orthophotos (the service with flight years) have seamline metadata.
+        self.metadata_check.setVisible(service.has_years)
         self.tree.setHeaderLabels(POINT_CLOUD_HEADERS if service.point_cloud else RASTER_HEADERS)
         self._clear_hits()
 
@@ -647,6 +661,11 @@ class StacDock(QDockWidget):
             if answer != QMessageBox.StandardButton.Yes:
                 return
         self._save_settings()
+        self._metadata_job = (
+            (items, Path(output))
+            if self.metadata_check.isVisible() and self.metadata_check.isChecked()
+            else None
+        )
 
         if jobs is not None:
             task = ClipTask(jobs, authcfg, Path(output))
@@ -760,7 +779,30 @@ class StacDock(QDockWidget):
             QgsMessageLog.logMessage(
                 f"{text} Alla fel: " + "; ".join(failures) if failures else text, PLUGIN_NAME, level
             )
+        job, self._metadata_job = self._metadata_job, None
+        if job and not cancelled:
+            self._fetch_metadata(job[0], job[1], text, level, duration)
+            return
         self._message(text, level, duration)
+
+    def _fetch_metadata(self, items: list[StacItem], output: Path, text: str, level, duration: int) -> None:
+        """Save the seamline files once the images are done, then show one combined message."""
+        task = MetadataTask(items, output)
+
+        def done(paths: list, failures: list) -> None:
+            self._metadata_task = None
+            missing = sum(1 for i in items if not i.metadata_href)
+            note = f"{len(paths)} metadatafiler (sömlinjer) hämtade."
+            if failures:
+                note += f" {len(failures)} misslyckades: " + "; ".join(failures[:2])
+            if missing:
+                note += f" {missing} rutor saknar metadatafil."
+            warn = bool(failures or missing)
+            self._message(f"{text} {note}", Qgis.MessageLevel.Warning if warn else level, duration)
+
+        task.completed.connect(done)
+        self._metadata_task = task
+        QgsApplication.taskManager().addTask(task)
 
 
 def _item_geometry(item: StacItem) -> QgsGeometry:
