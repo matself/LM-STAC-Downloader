@@ -16,7 +16,10 @@ metadatafil, t.ex. `.json` med sömlinjer (seamlines).
   (polygoner) finns bara från 2006 och framåt, och inte för 2006–2009. Önskemålet
   går alltså inte att uppfylla för historiska ortofoton. Kvar att verifiera: finns
   det en separat metadata-asset i STAC-items för 2006+ (felsökningsloggen på
-  grenen `seamlines` visar assets-nycklar). Svara användaren och fråga vilka år
+  grenen `seamlines` visar assets-nycklar). **Bekräftat för 2019** (`orto-l2-2019`):
+  assets är `data` (COG), `metadata` (`application/geo+json`) och `thumbnail`
+  (`image/jpeg`). Metadatafilen hämtas alltså via assetet `metadata`. Ännu ej
+  kontrollerat för `orto-historiska-*` (förväntas sakna `metadata`). Svara användaren och fråga vilka år
   de egentligen behöver.
 - Lägg till ett val (kryssruta) i dialogen: "Ladda ner metadatafil (.json)".
 - Kolla i STAC-items/assets för historiska ortofoton vilken asset som innehåller
