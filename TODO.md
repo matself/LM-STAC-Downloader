@@ -18,17 +18,11 @@ metadatafil, t.ex. `.json` med sömlinjer (seamlines).
   `<ruta>_flygbild.json` ligger på publik sökväg `/bild/pub/` (ingen inloggning) och är
   en GeoJSON `FeatureCollection` i EPSG:3006 med `bildidentitet` och `tidpunkt` per
   flygbild. Alla rutor har inte nödvändigtvis filen; pluginet hoppar över dem som saknar
-  `metadata`-asset. Kvar att verifiera: finns
-  det en separat metadata-asset i STAC-items för 2006+ (felsökningsloggen på
-  grenen `seamlines` visar assets-nycklar). **Bekräftat för 2019** (`orto-l2-2019`):
-  assets är `data` (COG), `metadata` (`application/geo+json`) och `thumbnail`
-  (`image/jpeg`). Metadatafilen hämtas alltså via assetet `metadata`. Ännu ej
-  kontrollerat för `orto-historiska-*` (förväntas sakna `metadata`). Svara användaren och fråga vilka år
-  de egentligen behöver.
-- Lägg till ett val (kryssruta) i dialogen: "Ladda ner metadatafil (.json)".
-- Kolla i STAC-items/assets för historiska ortofoton vilken asset som innehåller
-  sömlinjerna och vilken typ den har.
-- Spara metadatafilen bredvid bilderna, med samma namnschema.
+  `metadata`-asset (`application/geo+json`, bekräftat även för `orto-l2-2019`).
+- Klart på grenen: kryssruta "Hämta även metadatafil med sömlinjer (.json)" (bara för
+  ortofoto), sparas som `<utdatamapp>/<kollektion>/<ruta>_flygbild.json` efter bilderna.
+- Kvar: README/docs/CHANGELOG, versionsnummer, test av dialogen i QGIS, och att fråga
+  användaren om flera år i samma mosaik (här hade alla delbilder samma datum).
 
 ## Svar från Lantmäteriet (nov 2026) – att åtgärda
 
