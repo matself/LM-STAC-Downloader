@@ -130,8 +130,11 @@ def _debug_log_assets(feature: dict[str, Any]) -> None:
         assets = feature.get("assets") or {}
         details = {key: (asset or {}).get("type") for key, asset in assets.items()}
         rels = [link.get("rel") for link in feature.get("links") or []]
+        import json
+
         QgsMessageLog.logMessage(
-            f"[seamlines-debug] {collection} / {feature.get('id')}: assets={details} links={rels}",
+            f"[seamlines-debug] {collection} / {feature.get('id')}: assets={details} links={rels}\n"
+            f"[seamlines-debug] full item: {json.dumps(feature, ensure_ascii=False)}",
             "Geodata: Ortofoto & höjd (Lantmäteriet)",
             Qgis.MessageLevel.Info,
         )
