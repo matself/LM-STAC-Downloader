@@ -57,6 +57,29 @@ class StacClient:
         except ValueError as e:
             raise StacError(f"Ogiltigt JSON-svar från {url}: {e}", status) from e
 
+    _debug_fetched: set[str] = set()
+
+    def _debug_log_metadata(self, page: dict[str, Any]) -> None:
+        """TEMPORARY: fetch and log the `metadata` asset of the first item per collection."""
+        from qgis.core import Qgis, QgsMessageLog
+
+        for feature in page.get("features", []):
+            collection = feature.get("collection", "")
+            href = ((feature.get("assets") or {}).get("metadata") or {}).get("href")
+            if not href or collection in self._debug_fetched:
+                continue
+            self._debug_fetched.add(collection)
+            try:
+                content = json.dumps(self._request("GET", href), ensure_ascii=False)
+                message = f"{href}\n{len(content)} tecken\n{content[:30000]}"
+            except Exception as e:  # noqa: BLE001 - debug only
+                message = f"{href}\nFAILED: {e}"
+            QgsMessageLog.logMessage(
+                f"[seamlines-debug] metadata content for {collection} / {feature.get('id')}: {message}",
+                "Geodata: Ortofoto & höjd (Lantmäteriet)",
+                Qgis.MessageLevel.Info,
+            )
+
     def search(self, body: dict[str, Any]) -> Iterator[dict[str, Any]]:
         """POST /search and follow `next` links. Yields one page at a time."""
         url: str | None = f"{self.base_url}/search"
@@ -66,6 +89,7 @@ class StacClient:
             if self.feedback and self.feedback.isCanceled():
                 return
             page = self._request(method, url, page_body)
+            self._debug_log_metadata(page)  # TEMPORARY (branch seamlines)
             yield page
 
             next_link = next(
