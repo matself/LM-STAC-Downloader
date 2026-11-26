@@ -661,8 +661,11 @@ class StacDock(QDockWidget):
             if answer != QMessageBox.StandardButton.Yes:
                 return
         self._save_settings()
+        # The seamline files are always the whole tile's, never clipped to the area. They follow
+        # the images that are actually fetched (a tile outside the clip area is skipped).
+        fetched = [item for item, _ in jobs] if jobs is not None else items
         self._metadata_job = (
-            (items, Path(output))
+            (fetched, Path(output))
             if self.metadata_check.isVisible() and self.metadata_check.isChecked()
             else None
         )
