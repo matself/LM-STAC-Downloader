@@ -64,6 +64,14 @@ ORTHO_FEATURE = {
 }
 
 
+class ServicesTest(unittest.TestCase):
+    def test_paid_surface_model_is_excluded_from_orthophotos(self):
+        self.assertIn("orto-dsm-cog", SERVICES["ortofoto"].excluded_collections)
+
+    def test_elevation_search_is_limited_to_the_ground_model(self):
+        self.assertEqual(SERVICES["hojd"].collection, "dtm-cog")
+
+
 class ParseItemTest(unittest.TestCase):
     def test_orthophoto_metadata_asset(self):
         item = parse_item(ORTHO_FEATURE)

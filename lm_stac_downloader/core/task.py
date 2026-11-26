@@ -19,13 +19,19 @@ class SearchTask(QgsTask):
     status = pyqtSignal(str)
 
     def __init__(
-        self, base_url: str, authcfg: str, search_body: dict[str, Any], point_cloud: bool = False
+        self,
+        base_url: str,
+        authcfg: str,
+        search_body: dict[str, Any],
+        point_cloud: bool = False,
+        excluded_collections: tuple[str, ...] = (),
     ):
         super().__init__("Geodata: söker", QgsTask.Flag.CanCancel)
         self.base_url = base_url
         self.authcfg = authcfg
         self.search_body = {**search_body, "limit": PAGE_LIMIT}
         self.point_cloud = point_cloud
+        self.excluded_collections = excluded_collections
         self.items: list[StacItem] = []
         self.truncated = False
         self.error: str | None = None
@@ -45,6 +51,8 @@ class SearchTask(QgsTask):
                 if self.isCanceled():
                     return False
                 for feature in page.get("features", []):
+                    if feature.get("collection") in self.excluded_collections:
+                        continue
                     item = parse_item(feature, self.point_cloud)
                     if item:
                         self.items.append(item)

@@ -24,6 +24,8 @@ account ordered through Lantmäteriet's Geotorget (see [Permissions](#permission
 | Elevation data (digital terrain model) | `https://api.lantmateriet.se/stac-hojd/v1` |
 | Laser data (point clouds), collection `dsm-skoglig-copc` ("Laserdata Skog") | `https://api.lantmateriet.se/stac-hojd/v1` |
 
+The plugin only fetches data that is free of charge. Lantmäteriet's catalogues also list paid products, for example the surface models (`dsm-cog` and `orto-dsm-cog`); these are left out of the search results. The laser data collection `dsm-skoglig-copc` ("Laserdata Skog") also has `dsm` in its name but is free (CC BY 4.0), and is included.
+
 Laser data is licensed CC BY 4.0: credit Lantmäteriet as the source when you use it. Vector data and NGP catalogues are not included. For NGP, see
 [ngp-downloader](https://github.com/matself/ngp-downloader).
 
@@ -126,6 +128,7 @@ does not store any credentials itself; it uses QGIS' authentication manager.
   COPC point clouds (about 100 to 160 MB per 2.5 km tile) in the file's own CRS (EPSG:5845), downloaded as whole files.
   There is no clipping for point clouds; cut out an area with your own tools (for example PDAL or QGIS processing).
   Lantmäteriet has said that the older 10 km tiles are being withdrawn (planned 2 November 2026) in favour of the 2.5 km tiles.
+* Orthophoto search leaves out the collection `orto-dsm-cog`: it is a paid surface model from aerial images, and the plugin only fetches free data. The catalogue lists it among the orthophotos, but the download server refuses it (HTTP 403) without an agreement.
 * Elevation search covers `dtm-cog` only (mostly 10 km tiles of roughly 350 MB; the 2.5 km `mhm-2.5` collection is no longer in the catalogue). The paid surface model `dsm-cog` is deliberately left out: the catalogue lists it, but downloads are refused (HTTP 403) without an agreement.
 * The plugin is tested with QGIS 4.2.3 (Qt6, Windows). QGIS 3.44 (Qt5) was tested for orthophotos and elevation data in
   earlier versions; laser data has not been tested there or on Linux/macOS.

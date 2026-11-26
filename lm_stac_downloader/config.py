@@ -28,11 +28,19 @@ class Service:
     # /stac-hojd/v1 with the elevation rasters).
     collection: str | None = None
     point_cloud: bool = False
+    # Paid collections (not `dsm-skoglig-copc`, which is free): the plugin only fetches free data. The catalogue lists them, but the
+    # download server refuses them without an agreement (HTTP 403), so items from them are
+    # left out of the search results.
+    excluded_collections: tuple[str, ...] = ()
 
 
 SERVICES = {
-    "ortofoto": Service("ortofoto", "Ortofoto", "/stac-bild/v1", True),
-    # Only the open ground model: the surface model (dsm-cog) is a paid product that
+    # `orto-dsm-cog` is the paid surface model from aerial images (DSM), listed among the
+    # orthophotos.
+    "ortofoto": Service(
+        "ortofoto", "Ortofoto", "/stac-bild/v1", True, excluded_collections=("orto-dsm-cog",)
+    ),
+    # Only the free ground model: the surface model (dsm-cog) is a paid product that
     # the API lists for everyone but the download server refuses (HTTP 403).
     "hojd": Service("hojd", "Höjddata (markhöjdmodell)", "/stac-hojd/v1", False, collection="dtm-cog"),
     "laser": Service(

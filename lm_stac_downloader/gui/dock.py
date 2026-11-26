@@ -458,7 +458,10 @@ class StacDock(QDockWidget):
         self._save_settings()
 
         key = self.service_combo.currentData()
-        task = SearchTask(search_base_url(key), authcfg, body, SERVICES[key].point_cloud)
+        service = SERVICES[key]
+        task = SearchTask(
+            search_base_url(key), authcfg, body, service.point_cloud, service.excluded_collections
+        )
         task.status.connect(self.search_status.setText)
         task.completed.connect(self._on_search_completed)
         task.failed.connect(self._on_search_failed)

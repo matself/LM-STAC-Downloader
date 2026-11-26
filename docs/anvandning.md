@@ -5,6 +5,8 @@
 Geodata: Ortofoto & höjd (Lantmäteriet) hämtar ortofoto och höjddata från Lantmäteriet. Den här sidan går igenom hela flödet, hur utsnitt
 fungerar och vad man gör när något inte fungerar.
 
+Pluginet hämtar bara avgiftsfria data. Lantmäteriets kataloger innehåller också avgiftsbelagda produkter, till exempel ytmodellerna (`dsm-cog` och `orto-dsm-cog`). De visas inte i sökresultaten, även om katalogen listar dem. Laserdata-kollektionen `dsm-skoglig-copc` (Laserdata Skog) har också `dsm` i namnet men är gratis (CC BY 4.0) och ingår.
+
 ## Innan du börjar
 
 Du behöver:

@@ -31,7 +31,9 @@ Avvaktar eventuella fler kommentarer från Lantmäteriet innan något ändras.
 - **Betalda produkter i ortofotokatalogen:** STAC-bild kan, precis som STAC-hojd,
   innehålla avgiftsbelagda produkter (t.ex. Ythöjdmodell Nedladdning). Kontrollera
   om ortofotosökningen visar samlingar som ger 403 utan avtal, och dölj dem som
-  `dsm-cog` i 1.1.2.
+  `dsm-cog` i 1.1.2. **Gjort på grenen `seamlines`:** `orto-dsm-cog` är den enda ytmodellen
+  bland 739 kollektioner i `stac-bild` och filtreras nu bort. Kontrollera om fler betalda
+  produkter dyker upp senare.
 - **Rutstorlek i README och docs:** README rad ~127 och `docs/anvandning.md` rad ~141
   säger att äldre 10 km-rutor tas bort till förmån för 2,5 km-rutor. Det gäller
   laserdata. För markhöjdmodellen går det åt motsatt håll (2,5 → 10 km, enligt
@@ -41,4 +43,13 @@ Avvaktar eventuella fler kommentarer från Lantmäteriet innan något ändras.
   Lantmäteriet har inte angett avvecklingsdatum eller ersättare för `mhm-2.5`;
   formulera om efter det.
 - Lantmäteriet tar vidare synpunkten att stora filer försvårar nedladdning av små
-  områden (hela filen hämtas).
+  områden (hela filen hämtas). Svar från Joel, Geodatasupport (25–26 nov 2026):
+  - Utvecklarnas ambition är 10 × 10 km-rutor för både laserdata och markhöjdmodell.
+  - För laserdata ströks 10 km-rutorna ändå, eftersom flera vanliga program har svårt
+    med så stora rutor. Markhöjdmodellen går alltså mot 10 km medan laserdata stannar på
+    2,5 km (se punkten om rutstorlek ovan).
+  - Joel tar vår synpunkt om stora markhöjdsfiler och önskemålet om gemensam
+    indelning vidare till produktutvecklarna. Inget beslut eller datum.
+  - Vår egen bedömning: utsnittsfunktionen (klipp och sätt ihop, bara COG) hanterar de
+    stora filerna bra för raster, så ingen ändring behövs i pluginet. Laserdata hämtas
+    fortfarande som hela filer.
