@@ -80,6 +80,7 @@ def parse_item(feature: dict[str, Any], point_cloud: bool = False) -> StacItem |
     stac-hojd serves both elevation rasters and point clouds (COPC/LAZ). With
     `point_cloud` False only rasters pass, with True only point clouds.
     """
+    _debug_log_assets(feature)  # TEMPORARY (branch seamlines): remove before merging
     data = (feature.get("assets") or {}).get("data")
     if not data or not data.get("href"):
         return None
@@ -111,6 +112,31 @@ def parse_item(feature: dict[str, Any], point_cloud: bool = False) -> StacItem |
         point_cloud=point_cloud,
         points=_int(props.get("pc:count", data.get("pc:count"))) if point_cloud else None,
     )
+
+
+_LOGGED_COLLECTIONS: set[str] = set()
+
+
+def _debug_log_assets(feature: dict[str, Any]) -> None:
+    """TEMPORARY: log the asset keys and link rels once per collection, to find out
+    whether items carry seamlines/metadata. Remove before merging."""
+    collection = feature.get("collection", "")
+    if collection in _LOGGED_COLLECTIONS:
+        return
+    _LOGGED_COLLECTIONS.add(collection)
+    try:
+        from qgis.core import Qgis, QgsMessageLog
+
+        assets = feature.get("assets") or {}
+        details = {key: (asset or {}).get("type") for key, asset in assets.items()}
+        rels = [link.get("rel") for link in feature.get("links") or []]
+        QgsMessageLog.logMessage(
+            f"[seamlines-debug] {collection} / {feature.get('id')}: assets={details} links={rels}",
+            "Geodata: Ortofoto & höjd (Lantmäteriet)",
+            Qgis.MessageLevel.Info,
+        )
+    except Exception:  # noqa: BLE001 - debug only
+        pass
 
 
 def _year(value: Any) -> int | None:

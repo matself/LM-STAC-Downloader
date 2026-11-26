@@ -5,12 +5,20 @@
 Önskemål från en användare: möjlighet att välja att även ladda ner kartbladens
 metadatafil, t.ex. `.json` med sömlinjer (seamlines).
 
-- Gäller sannolikt ortofoto (antagande, ej bekräftat med användaren).
+- Bekräftat av användaren: önskemålet gäller sömlinjer för **historiska ortofoton**.
+- Bekräftat att pluginet redan hittar dem: sökning med flygår 1950–2026 ger träffar i
+  kollektioner som `orto-historiska-1960-1969`, `orto-historiska-1970-1979` och
+  `orto-historiska-2000-2004` (bildtyp `pan`, 0,5–1 m, 14–88 MB per ruta), bredvid
+  vanliga `orto-a-2006`.
+- **Osäkert om sömlinjer finns i produkten.** En produktnyhet från Lantmäteriet
+  (2023) uppges säga att ortofoton 1993–2005 saknar sömlinjer och annan metadata.
+  Nyare ortofoto (från 2010) har sömlinjer och flygtider som separata
+  metadatalager. Verifiera mot STAC-items för `orto-historiska-*` (finns assets
+  utöver `data`?) eller fråga Lantmäteriet innan något byggs.
 - Lägg till ett val (kryssruta) i dialogen: "Ladda ner metadatafil (.json)".
-- Kolla i STAC-items/assets för ortofoto vilken asset som innehåller sömlinjerna
-  och vilken typ den har.
+- Kolla i STAC-items/assets för historiska ortofoton vilken asset som innehåller
+  sömlinjerna och vilken typ den har.
 - Spara metadatafilen bredvid bilderna, med samma namnschema.
-- Överväg att bekräfta med användaren vilken fil de menar.
 
 ## Svar från Lantmäteriet (nov 2026) – att åtgärda
 
