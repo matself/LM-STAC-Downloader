@@ -33,7 +33,7 @@ from .items import StacItem
 
 def seamline_layer(path: str) -> QgsVectorLayer:
     """The seamline GeoJSON as a layer: unfilled polygons with a yellow outline, labelled
-    with the aerial photo id and its date (yellow text with a white buffer)."""
+    with the aerial photo id and its date (black text with a white buffer)."""
     layer = QgsVectorLayer(path, Path(path).stem.replace("_flygbild", "") + " sömlinjer", "ogr")
     layer.setRenderer(
         QgsSingleSymbolRenderer(
@@ -42,7 +42,7 @@ def seamline_layer(path: str) -> QgsVectorLayer:
     )
     text = QgsTextFormat()
     text.setSize(10)
-    text.setColor(QColor("#ffff00"))
+    text.setColor(QColor("black"))
     buffer = QgsTextBufferSettings()
     buffer.setEnabled(True)
     buffer.setColor(QColor("white"))
