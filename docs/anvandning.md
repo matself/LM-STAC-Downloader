@@ -76,7 +76,8 @@ Vill du ha den senaste, begränsa **flygår** innan du söker.
 Välj **målmapp** under *Hämta*. Du kan också kryssa i:
 
 * **Hämta bara det valda området (utsnitt)**, se nedan.
-* **Lägg till i projektet när klart**, som öppnar filerna som rasterlager.
+* **Hämta även metadatafil med sömlinjer (.json)**, bara för ortofoto, se nedan.
+* **Lägg till i projektet när klart**, som öppnar filerna som rasterlager. Sömlinjerna öppnas som ett lager per ruta.
 
 Klicka **Hämta valda**. Framsteget visas i panelen, och **Avbryt** stoppar hämtningen. En avbruten hämtning lämnar ingen
 ofullständig fil.
@@ -109,6 +110,23 @@ Rutorna är Cloud Optimized GeoTIFF, alltså filer där en läsare kan hämta ju
 * Utsnittet följer området du sökte på, inte kartvyn när du hämtar. Ritar du om området måste du söka och markera igen.
 
 Ett exempel: fyra ortofotorutor (2,6 GB) som möts i ett hörn gav ett utsnitt på 436 × 436 m som en enda fil på 15 MB.
+
+### Sömlinjer (metadatafil)
+
+Ett ortofoto är en mosaik av flygbilder, ibland från olika dagar. Med **Hämta även metadatafil med sömlinjer (.json)**
+sparas en fil per ruta som visar var gränserna mellan flygbilderna går och vilken bild som är vilken.
+
+* Filen heter `<ruta>_flygbild.json` och sparas i samma mapp som bilden, `<målmapp>/<kollektion>/`.
+* Det är en GeoJSON i SWEREF 99 TM (EPSG:3006) med en yta per flygbild. Varje yta har `bildidentitet`, till exempel
+  `62_Eg_073_21`, och `tidpunkt`, flygbildens exakta tidpunkt.
+* Filen hämtas efter bilderna. Den ligger öppet hos Lantmäteriet, så inloggningen behövs inte för den.
+* Filen är alltid hela rutans, även när du bara hämtar ett utsnitt av bilden. Sömlinjerna klipps alltså inte till området,
+  så du ser hur hela bildfilen är sammansatt. I utsnittsläge hämtas filen bara för rutor som verkligen klipps.
+* Redan hämtade filer hoppas över.
+* Med **Lägg till i projektet när klart** läggs sömlinjerna in som lager, med ofyllda gula ytor och svarta etiketter med
+  bildidentitet och datum.
+* Funktionen gäller även historiska ortofoton. Alla rutor har inte en metadatafil. Lantmäteriets dokumentation anger till
+  exempel att sömlinjer saknas för vissa år. Pluginet visar hur många rutor som saknar fil i resultatmeddelandet.
 
 ### Höjdkollektioner
 

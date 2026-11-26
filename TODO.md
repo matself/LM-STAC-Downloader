@@ -2,7 +2,7 @@
 
 ## Ladda ner metadatafilen för kartblad (ortofoto)
 
-**Status:** kryssruta byggd på grenen `seamlines` (ej mergad, ej släppt). Kvar: README/docs/CHANGELOG, version, test av dialogen i QGIS.
+**Status:** kryssruta byggd och dokumenterad på grenen `seamlines` (pushad, ej mergad, ej släppt, versionsnumret är fortfarande 1.1.2). Kvar: versionsnummer och release, samt att testa hel-fil-nedladdning med metadata och rutor som saknar metadatafil i QGIS.
 
 Önskemål från en användare: möjlighet att välja att även ladda ner kartbladens
 metadatafil, t.ex. `.json` med sömlinjer (seamlines).

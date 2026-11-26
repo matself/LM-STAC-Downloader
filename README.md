@@ -81,7 +81,8 @@ groups: *Anslutning* (connection), *Sökning* (search) and, once there are hits,
 | Hämta | Download | Group with the download controls |
 | Hämta bara det valda området (utsnitt) | Download only the selected area (clip) | If checked, only the drawn area is downloaded and mosaicked instead of the full tiles. Not shown for laser data, which is always downloaded as whole files |
 | Laserdata: © Lantmäteriet, licens CC BY 4.0. Ange Lantmäteriet som källa när du använder datat. | Laser data: © Lantmäteriet, licence CC BY 4.0. Credit Lantmäteriet as the source when you use the data. | Attribution notice shown in the *Hämta* group for laser data |
-| Lägg till i projektet när klart | Add to project when done | Adds the downloaded raster(s) or point cloud(s) to the QGIS project once finished |
+| Hämta även metadatafil med sömlinjer (.json) | Also download the metadata file with seamlines (.json) | Orthophotos only. Saves the tile's metadata file, `<tile>_flygbild.json`, next to the image: a GeoJSON with one polygon per aerial photo in the mosaic, with the photo id and the exact time. The file is always the whole tile's, never clipped to the area, and is fetched after the images. Tiles without a metadata file are reported in the result message |
+| Lägg till i projektet när klart | Add to project when done | Adds the downloaded raster(s) or point cloud(s) to the QGIS project once finished. Seamline files are added as layers with unfilled yellow outlines and black labels (photo id and date) |
 | Hämta valda | Download selected | Starts downloading the selected hits |
 | Avbryt | Cancel | Cancels an ongoing download |
 | Fristående plugin, inte utvecklat av Lantmäteriet. | Independent plugin, not developed by Lantmäteriet. | Disclaimer label shown in the panel |
