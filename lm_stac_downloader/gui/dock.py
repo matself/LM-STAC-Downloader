@@ -62,7 +62,7 @@ from ..core.auth import authcfg_exists
 from ..core.clip import ClipTask, clip_bounds, covered_fraction
 from ..core.downloader import DownloadQueue
 from ..core.items import StacItem
-from ..core.metadata import MetadataTask
+from ..core.metadata import MetadataTask, seamline_layer
 from ..core.task import SearchTask
 from .auth_dialog import CreateAuthDialog
 
@@ -792,6 +792,13 @@ class StacDock(QDockWidget):
         def done(paths: list, failures: list) -> None:
             self._metadata_task = None
             missing = sum(1 for i in items if not i.metadata_href)
+            if self.add_to_project.isChecked():
+                for path in paths:
+                    layer = seamline_layer(path)
+                    if layer.isValid():
+                        QgsProject.instance().addMapLayer(layer)
+                    else:
+                        failures.append(f"{Path(path).name}: kunde inte öppnas som lager")
             note = f"{len(paths)} metadatafiler (sömlinjer) hämtade."
             if failures:
                 note += f" {len(failures)} misslyckades: " + "; ".join(failures[:2])

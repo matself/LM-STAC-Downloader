@@ -9,12 +9,52 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from qgis.core import Qgis, QgsBlockingNetworkRequest, QgsFeedback, QgsMessageLog, QgsTask
+from qgis.core import (
+    Qgis,
+    QgsBlockingNetworkRequest,
+    QgsFeedback,
+    QgsFillSymbol,
+    QgsMessageLog,
+    QgsPalLayerSettings,
+    QgsSingleSymbolRenderer,
+    QgsTask,
+    QgsTextBufferSettings,
+    QgsTextFormat,
+    QgsVectorLayer,
+    QgsVectorLayerSimpleLabeling,
+)
 from qgis.PyQt.QtCore import QUrl, pyqtSignal
+from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtNetwork import QNetworkRequest
 
 from ..config import PLUGIN_NAME
 from .items import StacItem
+
+
+def seamline_layer(path: str) -> QgsVectorLayer:
+    """The seamline GeoJSON as a layer: unfilled polygons with a yellow outline, labelled
+    with the aerial photo id and its date (yellow text with a white buffer)."""
+    layer = QgsVectorLayer(path, Path(path).stem.replace("_flygbild", "") + " sömlinjer", "ogr")
+    layer.setRenderer(
+        QgsSingleSymbolRenderer(
+            QgsFillSymbol.createSimple({"style": "no", "outline_color": "#ffff00", "outline_width": "0.8"})
+        )
+    )
+    text = QgsTextFormat()
+    text.setSize(10)
+    text.setColor(QColor("#ffff00"))
+    buffer = QgsTextBufferSettings()
+    buffer.setEnabled(True)
+    buffer.setColor(QColor("white"))
+    buffer.setSize(1.2)
+    text.setBuffer(buffer)
+    labels = QgsPalLayerSettings()
+    labels.fieldName = "\"bildidentitet\" || '\n' || left(\"tidpunkt\", 10)"
+    labels.isExpression = True
+    labels.setFormat(text)
+    layer.setLabeling(QgsVectorLayerSimpleLabeling(labels))
+    layer.setLabelsEnabled(True)
+    return layer
 
 
 def metadata_path(output_dir: Path, item: StacItem) -> Path:
