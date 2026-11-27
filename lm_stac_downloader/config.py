@@ -12,8 +12,11 @@ TOKEN_URL = "https://apimanager.lantmateriet.se/oauth2/token"  # nosec B105 - pu
 
 # The API takes the WGS 84 bbox/intersects of plain STAC.
 SEARCH_CRS = "EPSG:4326"
-PAGE_LIMIT = 100
-MAX_RESULTS = 1000
+PAGE_LIMIT = 1000
+# A search with more hits than this is given up: no hits are kept.
+MAX_RESULTS = 10000
+# The list and the map outlines stay empty while the filtered hits are more than this.
+MAX_SHOWN = 1000
 # Ask for confirmation before downloading more than this.
 WARN_BYTES = 2 * 1024**3
 

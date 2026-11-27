@@ -1,0 +1,552 @@
+[
+ {
+  "id": "o63500_5875_25_fj08",
+  "collection": "orto-oskarshamn-2008",
+  "bbox": [
+   16.451542222132993,
+   57.28411800825665,
+   16.493908801930235,
+   57.30705392231082
+  ],
+  "geometry": {
+   "type": "Polygon",
+   "coordinates": [
+    [
+     [
+      16.49327,
+      57.29228
+     ],
+     [
+      16.47417,
+      57.2921
+     ],
+     [
+      16.47095,
+      57.28438
+     ],
+     [
+      16.493,
+      57.28412
+     ],
+     [
+      16.49327,
+      57.29228
+     ]
+    ]
+   ]
+  },
+  "properties": {
+   "flygar": 2008,
+   "created": "2025-03-19T16:51:08Z",
+   "datetime": "2008-01-01T00:00:00Z",
+   "flyghojd": 2500,
+   "proj:bbox": [
+    587500.0,
+    6350000.0,
+    590000.0,
+    6352500.0
+   ],
+   "proj:code": "EPSG:3006",
+   "upplosning": 0.25,
+   "spektraltyp": "rgb",
+   "end_datetime": "2009-01-01T00:00:00Z",
+   "start_datetime": "2008-01-01T00:00:00Z"
+  },
+  "assets": {
+   "data": {
+    "href": "https://dl1.lantmateriet.se/bild/data/orto/tatort/2008/Oskarshamn/o63500_5875_25_fj08.tif",
+    "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+    "roles": [
+     "data"
+    ],
+    "title": "o63500_5875_25_fj08",
+    "file:size": 36816824,
+    "proj:bbox": [
+     587500.0,
+     6350000.0,
+     590000.0,
+     6352500.0
+    ],
+    "proj:code": "EPSG:3006",
+    "proj:shape": [
+     10000,
+     10000
+    ]
+   },
+   "thumbnail": {
+    "href": "https://dl1.lantmateriet.se/bild/pub/orto/tatort/2008/Oskarshamn/o63500_5875_25_fj08_thumbnail.png",
+    "type": "image/png",
+    "roles": [
+     "thumbnail",
+     "overview"
+    ],
+    "title": "o63500_5875_25_fj08_thumbnail"
+   }
+  }
+ },
+ {
+  "id": "o63475_5825_25_ij11",
+  "collection": "orto-oskarshamn-2011",
+  "bbox": [
+   16.36779191347229,
+   57.262624358017966,
+   16.410084101861283,
+   57.2855334346754
+  ],
+  "geometry": {
+   "type": "Polygon",
+   "coordinates": [
+    [
+     [
+      16.36779191347229,
+      57.263082108852544
+     ],
+     [
+      16.36862471996691,
+      57.2855334346754
+     ],
+     [
+      16.410084101861283,
+      57.28507529148446
+     ],
+     [
+      16.40922608744126,
+      57.262624358017966
+     ],
+     [
+      16.36779191347229,
+      57.263082108852544
+     ]
+    ]
+   ]
+  },
+  "properties": {
+   "flygar": 2011,
+   "created": "2025-03-18T12:47:01Z",
+   "datetime": "2011-04-28T12:57:19Z",
+   "flyghojd": 2500,
+   "proj:bbox": [
+    582500.0,
+    6347500.0,
+    585000.0,
+    6350000.0
+   ],
+   "proj:code": "EPSG:3006",
+   "upplosning": 0.25,
+   "spektraltyp": "cir",
+   "end_datetime": "2011-04-28T12:57:19Z",
+   "start_datetime": "2011-04-28T12:52:18Z"
+  },
+  "assets": {
+   "data": {
+    "href": "https://dl1.lantmateriet.se/bild/data/orto/tatort_i/2011/Oskarshamn/o63475_5825_25_ij11.tif",
+    "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+    "roles": [
+     "data"
+    ],
+    "title": "o63475_5825_25_ij11",
+    "file:size": 110199617,
+    "proj:bbox": [
+     582500.0,
+     6347500.0,
+     585000.0,
+     6350000.0
+    ],
+    "proj:code": "EPSG:3006",
+    "proj:shape": [
+     10000,
+     10000
+    ]
+   },
+   "metadata": {
+    "href": "https://dl1.lantmateriet.se/bild/pub/orto/tatort_i/2011/Oskarshamn/o63475_5825_25_ij11_flygbild.json",
+    "type": "application/geo+json",
+    "roles": [
+     "metadata"
+    ],
+    "title": "o63475_5825_25_ij11_flygbild"
+   },
+   "thumbnail": {
+    "href": "https://dl1.lantmateriet.se/bild/pub/orto/tatort_i/2011/Oskarshamn/o63475_5825_25_ij11_thumbnail.jpg",
+    "type": "image/jpeg",
+    "roles": [
+     "thumbnail",
+     "overview"
+    ],
+    "title": "o63475_5825_25_ij11_thumbnail"
+   }
+  }
+ },
+ {
+  "id": "o64350_5000_50_ii11",
+  "collection": "orto-i2-2011",
+  "bbox": [
+   14.999999999999982,
+   58.056467270828506,
+   15.084829082003889,
+   58.10140516051396
+  ],
+  "geometry": {
+   "type": "Polygon",
+   "coordinates": [
+    [
+     [
+      14.999999999999982,
+      58.05649544663281
+     ],
+     [
+      14.999999999999982,
+      58.10140516051396
+     ],
+     [
+      15.084829082003889,
+      58.101376935724296
+     ],
+     [
+      15.08472261501593,
+      58.056467270828506
+     ],
+     [
+      14.999999999999982,
+      58.05649544663281
+     ]
+    ]
+   ]
+  },
+  "properties": {
+   "flygar": 2011,
+   "created": "2025-03-18T12:55:18Z",
+   "datetime": "2011-05-08T09:52:26Z",
+   "flyghojd": 4800,
+   "proj:bbox": [
+    500000.0,
+    6435000.0,
+    505000.0,
+    6440000.0
+   ],
+   "proj:code": "EPSG:3006",
+   "upplosning": 0.5,
+   "spektraltyp": "cir",
+   "end_datetime": "2011-05-08T09:52:58Z",
+   "start_datetime": "2011-05-08T09:52:15Z"
+  },
+  "assets": {
+   "data": {
+    "href": "https://dl1.lantmateriet.se/bild/data/orto/se0_5i_sweref/2011_I2/o64350_5000_50_ii11.tif",
+    "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+    "roles": [
+     "data"
+    ],
+    "title": "o64350_5000_50_ii11",
+    "file:size": 221212783,
+    "proj:bbox": [
+     500000.0,
+     6435000.0,
+     505000.0,
+     6440000.0
+    ],
+    "proj:code": "EPSG:3006",
+    "proj:shape": [
+     10000,
+     10000
+    ]
+   },
+   "metadata": {
+    "href": "https://dl1.lantmateriet.se/bild/pub/orto/se0_5i_sweref/2011_I2/o64350_5000_50_ii11_flygbild.json",
+    "type": "application/geo+json",
+    "roles": [
+     "metadata"
+    ],
+    "title": "o64350_5000_50_ii11_flygbild"
+   },
+   "thumbnail": {
+    "href": "https://dl1.lantmateriet.se/bild/pub/orto/se0_5i_sweref/2011_I2/o64350_5000_50_ii11_thumbnail.jpg",
+    "type": "image/jpeg",
+    "roles": [
+     "thumbnail",
+     "overview"
+    ],
+    "title": "o64350_5000_50_ii11_thumbnail"
+   }
+  }
+ },
+ {
+  "id": "o62100_5450_25_mr26",
+  "collection": "orto-b2-2026",
+  "bbox": [
+   15.722150711573,
+   56.032870012051845,
+   15.762709271099688,
+   56.055571741176855
+  ],
+  "geometry": {
+   "type": "Polygon",
+   "coordinates": [
+    [
+     [
+      15.722150711573,
+      56.033111328568765
+     ],
+     [
+      15.722570371769828,
+      56.055571741176855
+     ],
+     [
+      15.762709271099688,
+      56.05533022157233
+     ],
+     [
+      15.762266304070636,
+      56.032870012051845
+     ],
+     [
+      15.722150711573,
+      56.033111328568765
+     ]
+    ]
+   ]
+  },
+  "properties": {
+   "flygar": 2026,
+   "created": "2026-09-29T03:29:24Z",
+   "datetime": "2026-04-21T08:11:12Z",
+   "flyghojd": 3000,
+   "proj:bbox": [
+    545000.0,
+    6210000.0,
+    547500.0,
+    6212500.0
+   ],
+   "proj:code": "EPSG:3006",
+   "upplosning": 0.16,
+   "spektraltyp": "rgbi",
+   "end_datetime": "2026-04-21T08:11:20Z",
+   "start_datetime": "2026-04-20T14:23:02Z"
+  },
+  "assets": {
+   "data": {
+    "href": "https://dl1.lantmateriet.se/bild/data/orto/se0_16m_sweref/2026_B2/o62100_5450_25_mr26.tif",
+    "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+    "roles": [
+     "data"
+    ],
+    "title": "o62100_5450_25_mr26",
+    "file:size": 520917798,
+    "proj:bbox": [
+     545000.0,
+     6210000.0,
+     547500.0,
+     6212500.0
+    ],
+    "proj:code": "EPSG:3006",
+    "proj:shape": [
+     15625,
+     15625
+    ]
+   },
+   "metadata": {
+    "href": "https://dl1.lantmateriet.se/bild/pub/orto/se0_16m_sweref/2026_B2/o62100_5450_25_mr26_flygbild.json",
+    "type": "application/geo+json",
+    "roles": [
+     "metadata"
+    ],
+    "title": "o62100_5450_25_mr26_flygbild"
+   },
+   "thumbnail": {
+    "href": "https://dl1.lantmateriet.se/bild/pub/orto/se0_16m_sweref/2026_B2/o62100_5450_25_mr26_thumbnail.jpg",
+    "type": "image/jpeg",
+    "roles": [
+     "thumbnail",
+     "overview"
+    ],
+    "title": "o62100_5450_25_mr26_thumbnail"
+   }
+  }
+ },
+ {
+  "id": "o62975_5650_25_im18",
+  "collection": "orto-b2-2018",
+  "bbox": [
+   16.064794547094383,
+   56.816455063560525,
+   16.106401579377515,
+   56.83926654165072
+  ],
+  "geometry": {
+   "type": "Polygon",
+   "coordinates": [
+    [
+     [
+      16.064794547094383,
+      56.81681108126276
+     ],
+     [
+      16.06543193336576,
+      56.83926654165072
+     ],
+     [
+      16.106401579377515,
+      56.83891022087884
+     ],
+     [
+      16.10573969528835,
+      56.816455063560525
+     ],
+     [
+      16.064794547094383,
+      56.81681108126276
+     ]
+    ]
+   ]
+  },
+  "properties": {
+   "flygar": 2018,
+   "created": "2025-01-31T02:34:53Z",
+   "datetime": "2018-08-08T08:41:51Z",
+   "flyghojd": 3700,
+   "proj:bbox": [
+    565000.0,
+    6297500.0,
+    567500.0,
+    6300000.0
+   ],
+   "proj:code": "EPSG:3006",
+   "upplosning": 0.25,
+   "spektraltyp": "cir",
+   "end_datetime": "2018-08-08T08:42:02Z",
+   "start_datetime": "2018-08-08T08:41:40Z"
+  },
+  "assets": {
+   "data": {
+    "href": "https://dl1.lantmateriet.se/bild/data/orto/se0_25i_sweref/2018_B2/o62975_5650_25_im18.tif",
+    "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+    "roles": [
+     "data"
+    ],
+    "title": "o62975_5650_25_im18",
+    "file:size": 240262980,
+    "proj:bbox": [
+     565000.0,
+     6297500.0,
+     567500.0,
+     6300000.0
+    ],
+    "proj:code": "EPSG:3006",
+    "proj:shape": [
+     10000,
+     10000
+    ]
+   },
+   "metadata": {
+    "href": "https://dl1.lantmateriet.se/bild/pub/orto/se0_25i_sweref/2018_B2/o62975_5650_25_im18_flygbild.json",
+    "type": "application/geo+json",
+    "roles": [
+     "metadata"
+    ],
+    "title": "o62975_5650_25_im18_flygbild"
+   },
+   "thumbnail": {
+    "href": "https://dl1.lantmateriet.se/bild/pub/orto/se0_25i_sweref/2018_B2/o62975_5650_25_im18_thumbnail.jpg",
+    "type": "image/jpeg",
+    "roles": [
+     "thumbnail",
+     "overview"
+    ],
+    "title": "o62975_5650_25_im18_thumbnail"
+   }
+  }
+ },
+ {
+  "id": "o08b9i_c56",
+  "collection": "orto-historiska-1940-1959",
+  "bbox": [
+   12.195021563083447,
+   58.52705328617229,
+   12.285374073506787,
+   58.57428065031097
+  ],
+  "geometry": {
+   "type": "Polygon",
+   "coordinates": [
+    [
+     [
+      12.199676002205488,
+      58.52707575854903
+     ],
+     [
+      12.195064675944739,
+      58.571874871529715
+     ],
+     [
+      12.280830069991284,
+      58.57425882631008
+     ],
+     [
+      12.285332437747188,
+      58.529455551295385
+     ],
+     [
+      12.199676002205488,
+      58.52707575854903
+     ]
+    ]
+   ]
+  },
+  "properties": {
+   "flygar": 1956,
+   "created": "2025-09-16T14:38:48Z",
+   "datetime": "1961-04-19T11:00:00Z",
+   "flyghojd": 4600,
+   "proj:bbox": [
+    1290000,
+    6495000,
+    1295000,
+    6500000
+   ],
+   "proj:code": "EPSG:3021",
+   "upplosning": 0.5,
+   "spektraltyp": "pan",
+   "end_datetime": "1961-04-19T11:00:00Z",
+   "start_datetime": "1961-04-19T11:00:00Z"
+  },
+  "assets": {
+   "data": {
+    "href": "https://dl1.lantmateriet.se/bild/data/orto/se0_5g/ref1960/08b-08c_56-60/o08b9i_c56.tif",
+    "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+    "roles": [
+     "data"
+    ],
+    "title": "o08b9i_c56",
+    "file:size": 96358785,
+    "proj:bbox": [
+     1290000,
+     6495000,
+     1295000,
+     6500000
+    ],
+    "proj:code": "EPSG:3021",
+    "proj:shape": [
+     10000,
+     10000
+    ]
+   },
+   "metadata": {
+    "href": "https://dl1.lantmateriet.se/bild/pub/orto/se0_5g/ref1960/08b-08c_56-60/o08b9i_c56_flygbild.json",
+    "type": "application/geo+json",
+    "roles": [
+     "metadata"
+    ],
+    "title": "o08b9i_c56_flygbild"
+   },
+   "thumbnail": {
+    "href": "https://dl1.lantmateriet.se/bild/pub/orto/se0_5g/ref1960/08b-08c_56-60/o08b9i_c56_thumbnail.jpg",
+    "type": "image/jpeg",
+    "roles": [
+     "thumbnail",
+     "overview"
+    ],
+    "title": "o08b9i_c56_thumbnail"
+   }
+  }
+ }
+]

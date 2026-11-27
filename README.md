@@ -70,6 +70,7 @@ groups: *Anslutning* (connection), *Sökning* (search) and, once there are hits,
 | Inget område valt | No area selected | Shown until a search area has been set |
 | Sök | Search | Runs the STAC search for the selected area and service |
 | Rensa sökområde och träffar | Clear search area and hits | Removes the search box and the blue/orange result boxes from the map |
+| Upplösning, Bildtyp, Serie | Resolution, Image type, Series | Orthophoto result filters above the hit list, built from the values among the hits. Nothing ticked in a row shows everything; several ticks in a row add up; the rows narrow each other. Image types: *Färg* (colour: `rgb`, `rgbi`), *Infraröd* (`cir`, `rgbi`), *Svartvit* (`pan`). Series: *Område* (area), *Tätort* (town, files in a `tatort` folder), *Historiska* (historical). Hidden hits are left out of the map outlines, map picking, *Markera alla* and the download |
 | Träffar | Hits | Group listing the search results (name, collection, type, year, resolution, changed, size) |
 | Ruta, Kollektion, Typ, År, Upplösning, Ändrad, Storlek | Tile, Collection, Type, Year, Resolution, Changed, Size | Columns of the hit list. *Typ* is the image type for orthophotos (`rgb` colour, `cir` colour infrared, `pan` panchromatic) and the tile size for elevation and laser data |
 | 2,5 km-ruta | 2.5 km tile | Value in *Typ*: a tile of 2.5 x 2.5 km |
@@ -122,7 +123,7 @@ does not store any credentials itself; it uses QGIS' authentication manager.
 
 ## Limitations
 
-* Search is limited to 1000 hits.
+* The list and the map outlines show at most 1000 hits. With more, only the count is shown until the orthophoto filters, a smaller area or fewer years bring it down. A search with more than 10 000 hits is given up.
 * The clip follows the area you searched on, not the map view at download time.
 * Laser data: only the collection `dsm-skoglig-copc` is searched, and it does not cover all of Sweden. The files are
   COPC point clouds (about 100 to 160 MB per 2.5 km tile) in the file's own CRS (EPSG:5845), downloaded as whole files.

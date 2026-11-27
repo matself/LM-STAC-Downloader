@@ -14,7 +14,7 @@ from .items import StacItem, parse_item
 
 class SearchTask(QgsTask):
     # Emitted in the main thread via QgsTask.finished → safe for UI work.
-    completed = pyqtSignal(list, bool)  # items, truncated at MAX_RESULTS
+    completed = pyqtSignal(list, bool)  # items, more than MAX_RESULTS (then no items)
     failed = pyqtSignal(str)
     status = pyqtSignal(str)
 
@@ -57,8 +57,9 @@ class SearchTask(QgsTask):
                     if item:
                         self.items.append(item)
                 self.status.emit(f"{len(self.items)} träffar (anrop {page_no})")
-                if len(self.items) >= MAX_RESULTS:
-                    self.items = self.items[:MAX_RESULTS]
+                if len(self.items) > MAX_RESULTS:
+                    # A cut-off list would silently lack some hits, so none are kept.
+                    self.items = []
                     self.truncated = True
                     break
         except StacError as e:

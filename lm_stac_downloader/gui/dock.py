@@ -33,6 +33,7 @@ from qgis.PyQt.QtWidgets import (
     QComboBox,
     QDockWidget,
     QFormLayout,
+    QGridLayout,
     QGroupBox,
     QHBoxLayout,
     QLabel,
@@ -51,6 +52,7 @@ from qgis.PyQt.QtWidgets import (
 from ..config import (
     DEFAULT_SERVICE,
     MAX_RESULTS,
+    MAX_SHOWN,
     PLUGIN_NAME,
     SEARCH_CRS,
     SERVICES,
@@ -58,6 +60,7 @@ from ..config import (
     WARN_BYTES,
     search_base_url,
 )
+from ..core import filters
 from ..core.auth import authcfg_exists
 from ..core.clip import ClipTask, clip_bounds, covered_fraction
 from ..core.downloader import DownloadQueue
@@ -71,6 +74,15 @@ COL_NAME, COL_COLLECTION, COL_TYPE, COL_YEAR, COL_RES, COL_CHANGED, COL_SIZE = r
 RASTER_HEADERS = ["Ruta", "Kollektion", "Typ", "År", "Upplösning", "Ändrad", "Storlek"]
 # Point clouds: the resolution column holds the number of points.
 POINT_CLOUD_HEADERS = ["Ruta", "Kollektion", "Typ", "Skannat", "Punkter", "Ändrad", "Storlek"]
+
+
+FILTER_TITLES = {filters.RESOLUTION: "Upplösning", filters.IMAGE_TYPE: "Bildtyp", filters.SERIES: "Serie"}
+# Label per value; the order here is the order of the checkboxes (resolutions are sorted by size).
+FILTER_LABELS = {
+    filters.IMAGE_TYPE: {filters.COLOUR: "Färg", filters.INFRARED: "Infraröd", filters.PANCHROMATIC: "Svartvit"},
+    filters.SERIES: {filters.AREA: "Område", filters.TOWN: "Tätort", filters.HISTORICAL: "Historiska"},
+}
+FILTERS_PER_ROW = 4
 
 
 def _format_count(count: int | None) -> str:
@@ -118,6 +130,8 @@ class StacDock(QDockWidget):
         self._metadata_job: tuple[list[StacItem], Path] | None = None  # seamline files to fetch after the images
         self._metadata_task: MetadataTask | None = None
         self._geometries: dict[tuple[str, str], QgsGeometry] = {}
+        # Ticked filter values per dimension; kept between searches.
+        self._filter_selection: dict[str, set] = {dimension: set() for dimension in FILTER_TITLES}
         self._previous_tool = None
 
         self._tool = QgsMapToolExtent(self.canvas)
@@ -239,6 +253,26 @@ class StacDock(QDockWidget):
     def _build_results_group(self) -> QGroupBox:
         group = QGroupBox("Träffar")
         layout = QVBoxLayout(group)
+
+        # Orthophoto filters: nothing ticked in a row means no restriction.
+        self.filter_widget = QWidget()
+        filter_form = QFormLayout(self.filter_widget)
+        filter_form.setContentsMargins(0, 0, 0, 0)
+        self._filter_grids: dict[str, QGridLayout] = {}
+        for dimension, title in FILTER_TITLES.items():
+            holder = QWidget()
+            grid = QGridLayout(holder)
+            grid.setContentsMargins(0, 0, 0, 0)
+            self._filter_grids[dimension] = grid
+            filter_form.addRow(title, holder)
+        self.filter_widget.setToolTip("Inget kryss i en rad visar allt. Flera kryss i en rad läggs ihop.")
+        self.filter_widget.setVisible(False)
+        layout.addWidget(self.filter_widget)
+        # Outside the filter widget: the elevation service has no filters but the same limit.
+        self.hits_status = QLabel("")
+        self.hits_status.setWordWrap(True)
+        self.hits_status.setVisible(False)
+        layout.addWidget(self.hits_status)
 
         self.tree = QTreeWidget()
         self.tree.setRootIsDecorated(False)
@@ -424,6 +458,8 @@ class StacDock(QDockWidget):
         self._geometries = {}
         self._rows = {}
         self.tree.clear()
+        self.filter_widget.setVisible(False)
+        self.hits_status.setVisible(False)
         self.search_status.setText("")
         self._update_summary()
         self.pick_btn.setChecked(False)
@@ -482,11 +518,77 @@ class StacDock(QDockWidget):
     def _on_search_completed(self, items: list, truncated: bool) -> None:
         self.items = items
         text = f"{len(items)} träffar."
-        if truncated:
-            text += f" Sökningen begränsades till {MAX_RESULTS}; snäva in området eller åren."
+        if truncated:  # too many to fetch: the task hands over no hits at all
+            text = f"Fler än {MAX_RESULTS} träffar, inga visas. {self._narrow_advice()}."
         self.search_status.setText(text)
         self._fill_results()
         self._show_footprints()
+        self._build_filters()
+
+    # --- filters ---------------------------------------------------------
+
+    def _build_filters(self) -> None:
+        """Offer the values present among the hits (orthophotos only)."""
+        show = bool(self.items) and SERVICES[self.service_combo.currentData()].has_years
+        self.filter_widget.setVisible(show)
+        for dimension, grid in self._filter_grids.items():
+            while grid.count():
+                grid.takeAt(0).widget().deleteLater()
+            if not show:
+                continue
+            present = filters.available(self.items, dimension)
+            # A value that is no longer offered must not keep filtering unseen.
+            self._filter_selection[dimension] &= present
+            if dimension == filters.RESOLUTION:
+                options = [(v, f"{v:g}".replace(".", ",") + " m") for v in sorted(present)]
+            else:
+                options = [(v, label) for v, label in FILTER_LABELS[dimension].items() if v in present]
+            for number, (value, label) in enumerate(options):
+                box = QCheckBox(label)
+                box.setChecked(value in self._filter_selection[dimension])
+                box.toggled.connect(
+                    lambda on, dimension=dimension, value=value: self._on_filter_toggled(dimension, value, on)
+                )
+                grid.addWidget(box, number // FILTERS_PER_ROW, number % FILTERS_PER_ROW)
+        self._apply_filters()
+
+    def _on_filter_toggled(self, dimension: str, value, on: bool) -> None:
+        if on:
+            self._filter_selection[dimension].add(value)
+        else:
+            self._filter_selection[dimension].discard(value)
+        self._apply_filters()
+
+    def _apply_filters(self) -> None:
+        """Hide the rows, outlines and map picks of hits that are not to be shown.
+
+        That is the hits the filters leave out, or every hit while more than
+        MAX_SHOWN remain: a cut-off list would not tell what is missing.
+        """
+        active = self.filter_widget.isVisibleTo(self)
+        shown, count = filters.select(self.items, self._filter_selection if active else {}, MAX_SHOWN)
+        keys = {(item.collection, item.id) for item in shown}
+        for key, row in self._rows.items():
+            row.setHidden(key not in keys)
+        total = len(self.items)
+        found = f"{count} av {total} träffar matchar filtren" if count < total else f"{total} träffar"
+        if count > MAX_SHOWN:
+            text = f"{found}. {self._narrow_advice()}, så att högst {MAX_SHOWN} återstår."
+        else:
+            text = f"Visar {count} av {total} träffar." if count < total else ""
+        self.hits_status.setText(text)
+        self.hits_status.setVisible(bool(text))
+        self._update_hits_band()
+        self._update_summary()
+
+    def _narrow_advice(self) -> str:
+        """What the user can change to get fewer hits from the current service."""
+        if SERVICES[self.service_combo.currentData()].has_years:
+            return "Välj filter eller minska området eller åren" if self.items else "Minska området eller åren"
+        return "Minska området"
+
+    def _visible_keys(self) -> list[tuple[str, str]]:
+        return [key for key, row in self._rows.items() if not row.isHidden()]
 
     # --- results ---------------------------------------------------------
 
@@ -523,11 +625,12 @@ class StacDock(QDockWidget):
             self.tree.resizeColumnToContents(column)
         self._update_summary()
 
-    def _checked_items(self) -> list[StacItem]:
+    def _checked_items(self, hidden: bool = False) -> list[StacItem]:
+        """The ticked hits that are shown; with `hidden`, the ticked ones that are not."""
         checked = []
         for i in range(self.tree.topLevelItemCount()):
             row = self.tree.topLevelItem(i)
-            if row.checkState(COL_NAME) == Qt.CheckState.Checked:
+            if row.checkState(COL_NAME) == Qt.CheckState.Checked and row.isHidden() == hidden:
                 checked.append(row.data(COL_NAME, Qt.ItemDataRole.UserRole + 1))
         return checked
 
@@ -535,7 +638,9 @@ class StacDock(QDockWidget):
         state = Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked
         self.tree.blockSignals(True)
         for i in range(self.tree.topLevelItemCount()):
-            self.tree.topLevelItem(i).setCheckState(COL_NAME, state)
+            row = self.tree.topLevelItem(i)
+            if not (checked and row.isHidden()):  # "all" means all that are shown
+                row.setCheckState(COL_NAME, state)
         self.tree.blockSignals(False)
         self._update_summary()
 
@@ -543,12 +648,15 @@ class StacDock(QDockWidget):
         checked = self._checked_items()
         known = sum(i.size for i in checked if i.size)
         unknown = sum(1 for i in checked if not i.size)
-        text = f"{len(checked)} av {len(self.items)} valda, {_format_bytes(known)}"
+        text = f"{len(checked)} av {len(self._visible_keys())} valda, {_format_bytes(known)}"
         points = sum(i.points for i in checked if i.points)
         if points:
             text += f", {_format_count(points)} punkter"
         if unknown:
             text += f" (+{unknown} med okänd storlek)"
+        hidden = len(self._checked_items(hidden=True))
+        if hidden:
+            text += f". {hidden} markerade visas inte och hämtas inte"
         self.summary_label.setText(text)
         self._update_selected_band()
 
@@ -560,13 +668,17 @@ class StacDock(QDockWidget):
         the search task's completion slot.
         """
         self._geometries = {(i.collection, i.id): _item_geometry(i) for i in self.items}
+        self._update_hits_band()
+        self._update_selected_band()
+
+    def _update_hits_band(self) -> None:
         self._hits_band.reset(Qgis.GeometryType.Polygon)
-        if self._geometries:
+        geometries = [self._geometries[key] for key in self._visible_keys() if key in self._geometries]
+        if geometries:
             self._hits_band.setToGeometry(
-                QgsGeometry.collectGeometry(list(self._geometries.values())),
+                QgsGeometry.collectGeometry(geometries),
                 QgsCoordinateReferenceSystem(SEARCH_CRS),
             )
-        self._update_selected_band()
 
     def _update_selected_band(self) -> None:
         self._selected_band.reset(Qgis.GeometryType.Polygon)
@@ -602,7 +714,7 @@ class StacDock(QDockWidget):
         hits = [
             key
             for key, geometry in self._geometries.items()
-            if key in self._rows and geometry.contains(click)
+            if key in self._rows and not self._rows[key].isHidden() and geometry.contains(click)
         ]
         if not hits:
             return

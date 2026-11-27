@@ -55,7 +55,9 @@ QGIS kan be om huvudlösenord första gången.
 Sökområdet visas som en röd ruta, träffarna som blå konturer och de rutor du markerat som orange fyllning.
 **Rensa sökområde och träffar** tar bort allt från kartan.
 
-Sökningen tar som mest 1000 träffar. Blir det fler visas ett meddelande. Snäva då in området eller åren.
+Listan och kartkonturerna visar som mest 1000 träffar. Blir det fler visas inga träffar, bara antalet. För ortofoto kan du
+då kryssa i filter (**Upplösning**, **Bildtyp**, **Serie**) tills högst 1000 återstår, eller minska området eller åren. Inget
+kryss i en rad visar allt, och flera kryss i en rad läggs ihop. Ger sökningen fler än 10 000 träffar hämtas ingen lista alls.
 
 ## 3. Välj rutor
 
@@ -170,7 +172,8 @@ Geotorget, och att applikationen prenumererar på STAC-bild respektive STAC-hojd
 
 **Sökningen ger inga träffar.** Kontrollera området och, för ortofoto, flygåren. Alla år finns inte överallt.
 
-**"Sökningen begränsades till 1000".** Snäva in området eller årsintervallet.
+**Sökningen ger träffar men listan är tom.** Fler än 1000 träffar återstår. Kryssa i filter, eller minska området eller
+årsintervallet.
 
 **Inloggningen frågar efter huvudlösenord.** QGIS skyddar autentiseringsdatabasen. Ange ditt huvudlösenord.
 

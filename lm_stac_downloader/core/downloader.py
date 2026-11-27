@@ -50,18 +50,20 @@ class DownloadQueue(QObject):
 
     def _next(self) -> None:
         self._downloader = None
-        self._index += 1
-        if self._cancelled or self._index >= len(self.items):
-            self._done()
-            return
+        # Files already present are passed over in this loop; a recursive call
+        # per file overflowed the stack when there were hundreds of them.
+        while True:
+            self._index += 1
+            if self._cancelled or self._index >= len(self.items):
+                self._done()
+                return
 
-        item = self.items[self._index]
-        final = target_path(self.output_dir, item)
-        if final.exists() and (item.size is None or final.stat().st_size == item.size):
+            item = self.items[self._index]
+            final = target_path(self.output_dir, item)
+            if not (final.exists() and (item.size is None or final.stat().st_size == item.size)):
+                break
             self.paths.append(str(final))
             self.progress.emit(self._index + 1, len(self.items), item.filename, 1, 1)
-            self._next()
-            return
 
         final.parent.mkdir(parents=True, exist_ok=True)
         part = final.with_name(final.name + ".part")
