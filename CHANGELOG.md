@@ -1,5 +1,7 @@
 # Changelog
 
+- **Unreleased** (branch `fix-clip-sources`): Fixed clips silently leaving out a tile that could not be read, which gave a file with a hole in it that was reported as successful and reused later. Every tile is now opened first; if one fails, no file is written for that group and the message names it.
+- **Unreleased** (branch `fix-clip-sources`): Fixed tiles from different flight years hiding each other in a clip (historical orthophotos): years that cover the same ground now get one file each. Clip file names include the flight year and a checksum of the tiles, so a file made from other tiles for the same area is no longer reused. Clips saved by earlier versions are therefore fetched again.
 - **Unreleased** (branch `result-filters`): A search no longer cuts off its hits at 1000, which silently left out some. All hits are fetched (1000 per request, up to 10 000), and the list and map show them only when at most 1000 remain after the filters; otherwise the count is shown with a request to narrow the search.
 - **Unreleased** (branch `result-filters`): Fixed a crash (`RecursionError`) when downloading a selection with many files that were already present.
 - **Unreleased** (branch `result-filters`): Orthophoto hits can be filtered by resolution, image type and series (area, town, historical). Several values can be ticked per group; nothing ticked shows everything. The map outlines, map picking, *Select all* and the download follow the filters.

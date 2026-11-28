@@ -125,6 +125,7 @@ does not store any credentials itself; it uses QGIS' authentication manager.
 
 * The list and the map outlines show at most 1000 hits. With more, only the count is shown until the orthophoto filters, a smaller area or fewer years bring it down. A search with more than 10 000 hits is given up.
 * The clip follows the area you searched on, not the map view at download time.
+* Clipped tiles are mosaicked into one file per collection and image type. Where tiles from different flight years cover the same ground (this happens with historical orthophotos), each year gets its own file, so that none hides another. If any tile of a file cannot be read, that file is not written and the message names the tile.
 * Laser data: only the collection `dsm-skoglig-copc` is searched, and it does not cover all of Sweden. The files are
   COPC point clouds (about 100 to 160 MB per 2.5 km tile) in the file's own CRS (EPSG:5845), downloaded as whole files.
   There is no clipping for point clouds; cut out an area with your own tools (for example PDAL or QGIS processing).

@@ -1,0 +1,154 @@
+[
+ {
+  "id": "o06h3a_c99",
+  "collection": "orto-historiska-1990-1999",
+  "bbox": [
+   16.636101246202546,
+   57.40668322284047,
+   16.72237037218349,
+   57.45321518316236
+  ],
+  "geometry": null,
+  "properties": {
+   "flygar": 1999,
+   "datetime": "1999-01-01T00:00:00Z",
+   "proj:bbox": [
+    1550000,
+    6365000,
+    1555000,
+    6370000
+   ],
+   "proj:code": "EPSG:3021",
+   "upplosning": 1.0,
+   "spektraltyp": "pan"
+  },
+  "assets": {
+   "data": {
+    "href": "https://dl1.lantmateriet.se/bild/data/orto/se1g/06h/sv/o06h3a_c99.tif",
+    "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+    "file:size": 25225068,
+    "proj:bbox": [
+     1550000,
+     6365000,
+     1555000,
+     6370000
+    ],
+    "proj:code": "EPSG:3021"
+   }
+  }
+ },
+ {
+  "id": "o06h3a_a94",
+  "collection": "orto-historiska-1990-1999",
+  "bbox": [
+   16.636101246202546,
+   57.40668322284047,
+   16.72237037218349,
+   57.45321518316236
+  ],
+  "geometry": null,
+  "properties": {
+   "flygar": 1994,
+   "datetime": "1994-01-01T00:00:00Z",
+   "proj:bbox": [
+    1550000,
+    6365000,
+    1555000,
+    6370000
+   ],
+   "proj:code": "EPSG:3021",
+   "upplosning": 1.0,
+   "spektraltyp": "pan"
+  },
+  "assets": {
+   "data": {
+    "href": "https://dl1.lantmateriet.se/bild/data/orto/se1g/06h/sv/o06h3a_a94.tif",
+    "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+    "file:size": 24274296,
+    "proj:bbox": [
+     1550000,
+     6365000,
+     1555000,
+     6370000
+    ],
+    "proj:code": "EPSG:3021"
+   }
+  }
+ },
+ {
+  "id": "o05g9e_c57",
+  "collection": "orto-historiska-1940-1959",
+  "bbox": [
+   16.13538752368235,
+   57.229733129349974,
+   16.22063502614332,
+   57.27593720741585
+  ],
+  "geometry": null,
+  "properties": {
+   "flygar": 1957,
+   "datetime": "1957-05-27T11:00:00Z",
+   "proj:bbox": [
+    1520000,
+    6345000,
+    1525000,
+    6350000
+   ],
+   "proj:code": "EPSG:3021",
+   "upplosning": 0.5,
+   "spektraltyp": "pan"
+  },
+  "assets": {
+   "data": {
+    "href": "https://dl1.lantmateriet.se/bild/data/orto/se0_5g/ref1960/04f-05g_57/o05g9e_c57.tif",
+    "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+    "file:size": 102879982,
+    "proj:bbox": [
+     1520000,
+     6345000,
+     1525000,
+     6350000
+    ],
+    "proj:code": "EPSG:3021"
+   }
+  }
+ },
+ {
+  "id": "o06g0e_c59",
+  "collection": "orto-historiska-1940-1959",
+  "bbox": [
+   16.135787458674102,
+   57.27462909989244,
+   16.22114053440658,
+   57.32083380003578
+  ],
+  "geometry": null,
+  "properties": {
+   "flygar": 1959,
+   "datetime": "1959-04-26T11:00:00Z",
+   "proj:bbox": [
+    1520000,
+    6350000,
+    1525000,
+    6355000
+   ],
+   "proj:code": "EPSG:3021",
+   "upplosning": 0.5,
+   "spektraltyp": "pan"
+  },
+  "assets": {
+   "data": {
+    "href": "https://dl1.lantmateriet.se/bild/data/orto/se0_5g/ref1960/06g-06h_59/o06g0e_c59.tif",
+    "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+    "file:size": 100756679,
+    "proj:bbox": [
+     1520000,
+     6350000,
+     1525000,
+     6355000
+    ],
+    "proj:code": "EPSG:3021"
+   }
+  }
+ }
+]

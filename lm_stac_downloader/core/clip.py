@@ -35,11 +35,10 @@ from qgis.PyQt.QtNetwork import QNetworkRequest
 
 from ..config import PLUGIN_NAME, SEARCH_CRS
 from .items import StacItem
+from .mosaic import Bounds, Group, group_jobs, mosaic_path
 
 # Renew the access token this often during a long clip (tokens last about an hour).
 TOKEN_REFRESH_SECONDS = 600
-
-Bounds = tuple[float, float, float, float]  # minx, miny, maxx, maxy in the item's CRS
 
 
 def clip_bounds(item: StacItem, area: QgsRectangle) -> Bounds | None:
@@ -73,21 +72,6 @@ def covered_fraction(item: StacItem, bounds: Bounds) -> float:
     return (bounds[2] - bounds[0]) * (bounds[3] - bounds[1]) / tile_area
 
 
-def mosaic_path(output_dir: Path, collection: str, spectral: str | None, bounds: Bounds) -> Path:
-    kind = f"_{spectral}" if spectral else ""
-    name = f"{collection}{kind}_utsnitt_{round(bounds[0])}_{round(bounds[1])}_{round(bounds[2])}_{round(bounds[3])}.tif"
-    return output_dir / collection / name
-
-
-def union_bounds(all_bounds: list[Bounds]) -> Bounds:
-    return (
-        min(b[0] for b in all_bounds),
-        min(b[1] for b in all_bounds),
-        max(b[2] for b in all_bounds),
-        max(b[3] for b in all_bounds),
-    )
-
-
 class ClipTask(QgsTask):
     # Emitted in the main thread via QgsTask.finished → safe for UI work.
     completed = pyqtSignal(list, list, bool)  # paths, failure messages, cancelled
@@ -103,19 +87,16 @@ class ClipTask(QgsTask):
         self.failures: list[str] = []
 
     def run(self) -> bool:
-        # One output per collection, CRS and spectral type: the tiles the area touches
-        # are mosaicked into a single file, which is what a user drawing an area expects.
-        # Colour (rgb) and infrared (cir) images of the same tile must stay apart.
-        groups: dict[tuple, list[tuple[StacItem, Bounds]]] = {}
-        for item, bounds in self.jobs:
-            groups.setdefault((item.collection, item.crs, item.spectral), []).append((item, bounds))
-        for index, ((collection, _crs, spectral), members) in enumerate(groups.items(), start=1):
+        # The tiles the area touches are mosaicked into as few files as possible, which
+        # is what a user drawing an area expects (see `mosaic.group_jobs`).
+        groups = group_jobs(self.jobs)
+        for index, group in enumerate(groups, start=1):
             if self.isCanceled():
                 return False
             try:
-                self._clip_group(index, len(groups), collection, spectral, members)
+                self._clip_group(index, len(groups), group)
             except Exception as e:  # noqa: BLE001 — report any failure per group
-                self.failures.append(f"{collection}{f' ({spectral})' if spectral else ''}: {e}")
+                self.failures.append(f"{group.label}: {e}")
         return True
 
     def _authorization(self, href: str) -> str:
@@ -128,26 +109,39 @@ class ClipTask(QgsTask):
             raise RuntimeError("kunde inte hämta inloggning från QGIS autentiseringshanterare")
         return header
 
-    @staticmethod
-    def _open_error(sources: list[str]) -> str:
-        """Why the files could not be mosaicked: the first one that will not open, with GDAL's reason."""
+    def _check_sources(self, sources: list[str]) -> None:
+        """Raise if any file cannot be opened, with GDAL's reason.
+
+        BuildVRT only warns about such a file and leaves it out, which would give a
+        clip with a hole in it that looks like a successful one.
+        """
         for source in sources:
+            if self.isCanceled():
+                return
             gdal.ErrorReset()
             try:
                 dataset = gdal.Open(source)
-            except RuntimeError as e:
-                hint = ""
-                if "response code: 40" in str(e):
-                    hint = " – nekad åtkomst: kontrollera att ditt Geotorget-konto har behörighet till produkten"
-                return f"{source.rsplit('/', 1)[-1]}: {e}{hint}"
+                reason = "" if dataset else gdal.GetLastErrorMsg() or "okänt fel"
+            except RuntimeError as e:  # GDAL exceptions are on
+                dataset, reason = None, str(e)
             if dataset is None:
-                reason = gdal.GetLastErrorMsg() or "okänt fel"
-                return f"{source.rsplit('/', 1)[-1]}: {reason}"
-        return gdal.GetLastErrorMsg() or "filerna öppnas var för sig men kan inte sättas ihop (format eller koordinatsystem?)"
+                if "response code: 401" in reason or "response code: 403" in reason:
+                    reason += " – nekad åtkomst: kontrollera att ditt Geotorget-konto har behörighet till produkten"
+                raise RuntimeError(f"{source.rsplit('/', 1)[-1]}: {reason}")
+            dataset = None
 
-    def _clip_group(self, index: int, count: int, collection: str, spectral: str | None, members: list) -> None:
-        bounds = union_bounds([b for _item, b in members])
-        final = mosaic_path(self.output_dir, collection, spectral, bounds)
+    @staticmethod
+    def _build_vrt(vrt_path: str, sources: list[str]):
+        # `strict` turns "skipping this file" warnings (e.g. a different band count) into errors.
+        try:
+            return gdal.BuildVRT(vrt_path, sources, strict=True)
+        except TypeError:  # GDAL older than 3.4.2; the files are already known to open
+            return gdal.BuildVRT(vrt_path, sources)
+
+    def _clip_group(self, index: int, count: int, group: Group) -> None:
+        members = group.members
+        bounds = group.bounds
+        final = mosaic_path(self.output_dir, group)
         if final.exists():
             self.paths.append(str(final))
             return
@@ -155,7 +149,7 @@ class ClipTask(QgsTask):
         part = final.with_name(final.name + ".part")
         vrt_path = f"/vsimem/lm_stac_{id(self)}_{index}.vrt"
         noun = "ruta" if len(members) == 1 else "rutor"
-        label = f"{collection}{f' {spectral}' if spectral else ''} ({len(members)} {noun})"
+        label = f"{group.label} ({len(members)} {noun})"
         first_href = members[0][0].href
 
         prefix = "/vsicurl/https://" + urlparse(first_href).netloc + "/"
@@ -171,10 +165,12 @@ class ClipTask(QgsTask):
         vrt = result = None
         try:
             sources = ["/vsicurl/" + item.href for item, _b in members]
-            vrt = gdal.BuildVRT(vrt_path, sources)
+            self._check_sources(sources)
+            if self.isCanceled():
+                return
+            vrt = self._build_vrt(vrt_path, sources)
             if vrt is None:
-                # BuildVRT gives no reason of its own; open the files one by one to find it.
-                raise RuntimeError(self._open_error(sources))
+                raise RuntimeError(gdal.GetLastErrorMsg() or "filerna kan inte sättas ihop")
             predictor = 3 if gdal.GetDataTypeName(vrt.GetRasterBand(1).DataType).startswith("Float") else 2
 
             def progress(fraction, _message, _data) -> int:
